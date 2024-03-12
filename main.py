@@ -14,7 +14,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import states
 from callbacks import MenuCallbackFactory
-from keyboards import get_menu_keyboard
+from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
 
 TOKEN = getenv("BOT_TOKEN")
 
@@ -68,7 +68,9 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await message.reply(
         "Напоминание создано, давай проверим, всё ли правильно?\n\n"
         f"Напоминание будет {data['time']}:\n"
-        f"{data['text']}")
+        f"{data['text']}",
+        reply_markup=get_confirm_remind_creation_keyboard()
+    )
 
     # Переходим к состоянию "подтверждение создания"
     await state.set_state(states.CreateNewReminder.confirm_creation)
