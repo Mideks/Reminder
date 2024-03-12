@@ -51,28 +51,20 @@ async def enter_remind_creation(
 @dp.message(states.CreateNewReminder.entering_text)
 async def enter_remind_text(message: Message, state: FSMContext):
     text = message.text
-    await message.reply("Окей, теперь давай определимся со временем")
+    await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
 
+    await message.reply("Окей, теперь давай определимся со временем")
     # Переходим к состоянию "ожидаю ввода времени напоминания"
     await state.set_state(states.CreateNewReminder.entering_time)
-    await state.update_data(text=text) # Здесь мы сохраняем введенный текст
-
-
-@dp.message(states.CreateNewReminder.entering_text)
-async def enter_remind_text(message: Message, state: FSMContext):
-    time = message.text
-    await message.reply("Окей, теперь давай определимся со временем")
-
-    # Переходим к состоянию "ожидаю ввода времени напоминания"
-    await state.set_state(states.CreateNewReminder.confirm_creation)
-    await state.update_data(time=time) # сохраняем введённую дату
 
 
 @dp.message(states.CreateNewReminder.entering_time)
 async def enter_remind_text(message: Message, state: FSMContext):
+    time = message.text
+    await state.update_data(time=time) # сохраняем введённую дату
+
     # получаем ранее записанные данные
     data = await state.get_data()
-    print(data)
     await message.reply(
         "Напоминание создано, давай проверим, всё ли правильно?\n\n"
         f"Напоминание будет {data['time']}:\n"

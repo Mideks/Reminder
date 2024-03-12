@@ -12,3 +12,5 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
 
     return builder.as_markup()
 
+
+
