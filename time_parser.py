@@ -9,7 +9,3 @@ def time_parser(time: str, format: str = "%d/%m/%y %H:%M") -> Optional[datetime]
         return datetime.strptime(time, format)
     except ValueError:
         return None
-
-
-time = time_parser(input())
-print(time)
