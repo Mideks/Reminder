@@ -25,11 +25,6 @@ dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 
 
-# Запланированное задание
-async def send_delayed_message(bot, chat_id):
-    await bot.send_message(chat_id, "Ещё одно сообщение")
-
-
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     await message.answer("Привет! Я бот напоминалка",
@@ -63,11 +58,12 @@ async def enter_remind_text(message: Message, state: FSMContext):
 @dp.message(states.CreateNewReminder.entering_time)
 async def enter_remind_text(message: Message, state: FSMContext):
     time = message.text
-    await state.update_data(time=time) # сохраняем введённую дату
+
     parsed_time = time_parser.time_parser(time)
     if parsed_time is None:
         await message.reply("Неверный формат даты! Попробуйте ещё раз")
         return
+    await state.update_data(time=parsed_time)  # сохраняем введённую дату
 
     # получаем ранее записанные данные
     data = await state.get_data()
@@ -82,10 +78,28 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await state.set_state(states.CreateNewReminder.confirm_creation)
 
 
-@dp.callback_query(ActionButton.filter(F.action == "new_reminder"))
-async def enter_remind_creation(
+async def send_remind(bot: Bot, chat_id: str, remind_text: str):
+    message_text = ("🔔 Вам новое напоминание!\n"
+                    f"💬: {remind_text}")
+    await bot.send_message(chat_id, message_text)
+
+
+@dp.callback_query(ActionButton.filter(F.action == "confirm_remind_creation"))
+async def confirm_remind_creation(
         callback: types.CallbackQuery, callback_data: ActionButton,
         state: FSMContext):
+    # Получаем контекст
+    data = await state.get_data()
+
+    # Добавить напоминание в планировщик
+    scheduler.add_job(send_remind, "date", run_date=data["time"],
+                      args=(callback.bot, callback.message.chat.id, data["text"]))
+
+    # todo: Добавить напоминание в базу данных
+
+    # Отправить сообщение
+    await callback.message.answer("☑️ Напоминание успешно создано")
+
 
 
 

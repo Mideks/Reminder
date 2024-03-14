@@ -17,11 +17,11 @@ def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.button(text="📝 Изменить текст",
-                   callback_data=ActionButton(action="change_text"))
+                   callback_data=ActionButton(action="change_remind_text"))
     builder.button(text="⏳ Изменить время",
-                   callback_data=ActionButton(action="change_time"))
+                   callback_data=ActionButton(action="change_remind_time"))
     builder.button(text="✅ Всё верно",
-                   callback_data=ActionButton(action="confirm"))
+                   callback_data=ActionButton(action="confirm_remind_creation"))
 
     builder.adjust(2, 1)
 
