@@ -13,6 +13,7 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import states
+import time_parser
 from callbacks import MenuCallbackFactory
 from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
 
@@ -53,7 +54,8 @@ async def enter_remind_text(message: Message, state: FSMContext):
     text = message.text
     await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
 
-    await message.reply("Окей, теперь давай определимся со временем")
+    await message.reply("Окей, теперь давай определимся со временем\n"
+                        "Вводите дату в формате DD/MM/YY hh:mm")
     # Переходим к состоянию "ожидаю ввода времени напоминания"
     await state.set_state(states.CreateNewReminder.entering_time)
 
@@ -62,6 +64,10 @@ async def enter_remind_text(message: Message, state: FSMContext):
 async def enter_remind_text(message: Message, state: FSMContext):
     time = message.text
     await state.update_data(time=time) # сохраняем введённую дату
+    parsed_time = time_parser.time_parser(time)
+    if parsed_time is None:
+        await message.reply("Неверный формат даты! Попробуйте ещё раз")
+        return
 
     # получаем ранее записанные данные
     data = await state.get_data()
