@@ -1,9 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-class MenuCallbackFactory(CallbackData, prefix="menu"):
+class ActionButton(CallbackData, prefix="action"):
+    group: str = ""
     action: str
 
-
-class ConfirmRemindCreationButton(CallbackData, prefix="crc"):
-    action: str

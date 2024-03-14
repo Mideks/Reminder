@@ -14,7 +14,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import states
 import time_parser
-from callbacks import MenuCallbackFactory
+from callbacks import ActionButton
 from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
 
 TOKEN = getenv("BOT_TOKEN")
@@ -37,9 +37,9 @@ async def command_start_handler(message: Message) -> None:
 
 
 # Вход в создание напоминаний
-@dp.callback_query(MenuCallbackFactory.filter(F.action == "new_reminder"))
+@dp.callback_query(ActionButton.filter(F.action == "new_reminder"))
 async def enter_remind_creation(
-        callback: types.CallbackQuery, callback_data: MenuCallbackFactory,
+        callback: types.CallbackQuery, callback_data: ActionButton,
         state: FSMContext):
 
     await callback.message.reply(
@@ -80,6 +80,13 @@ async def enter_remind_text(message: Message, state: FSMContext):
 
     # Переходим к состоянию "подтверждение создания"
     await state.set_state(states.CreateNewReminder.confirm_creation)
+
+
+@dp.callback_query(ActionButton.filter(F.action == "new_reminder"))
+async def enter_remind_creation(
+        callback: types.CallbackQuery, callback_data: ActionButton,
+        state: FSMContext):
+
 
 
 async def main() -> None:
