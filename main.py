@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+from datetime import datetime, timedelta
 from os import getenv
 
 from aiogram import Bot, Dispatcher, types, F
@@ -12,18 +13,22 @@ from aiogram.types import Message
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import db
 import states
 import time_parser
 from callbacks import ActionButton
 from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
 
 TOKEN = getenv("BOT_TOKEN")
+bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 dp = Dispatcher()
 
 # Создали планировщик
 scheduler = AsyncIOScheduler()
 
+url = 'sqlite:///example.sqlite'
+scheduler.add_jobstore('sqlalchemy', url=url)
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
@@ -78,10 +83,11 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await state.set_state(states.CreateNewReminder.confirm_creation)
 
 
-async def send_remind(bot: Bot, chat_id: str, remind_text: str):
+async def send_remind(chat_id: str, remind_text: str):
     message_text = ("🔔 Вам новое напоминание!\n"
                     f"💬: {remind_text}")
     await bot.send_message(chat_id, message_text)
+
 
 
 @dp.callback_query(ActionButton.filter(F.action == "confirm_remind_creation"))
@@ -92,15 +98,18 @@ async def confirm_remind_creation(
     data = await state.get_data()
 
     # Добавить напоминание в планировщик
-    scheduler.add_job(send_remind, "date", run_date=data["time"],
-                      args=(callback.bot, callback.message.chat.id, data["text"]))
+    id = scheduler.add_job(send_remind, "date", run_date=data["time"],
+                      args=(callback.message.chat.id, data["text"]))
 
-    # todo: Добавить напоминание в базу данных
+    db.add_remind(callback.message.chat.id, data["time"], "", data["text"], id)
 
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")
 
 
+@dp.message(F.text == "/test")
+async def test_command(message: Message):
+    await message.reply(str(db.get_reminds(message.chat.id)))
 
 
 async def main() -> None:
@@ -108,7 +117,6 @@ async def main() -> None:
     scheduler.start()
 
     # Запускаем бота
-    bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     await dp.start_polling(bot)
 
 
