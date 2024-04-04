@@ -1,11 +1,17 @@
 from datetime import datetime
 from typing import Optional
 
-"""
-Ожидает время в формате dd/mm/yy HH:MM
-"""
-def time_parser(time: str, format: str = "%d/%m/%y %H:%M") -> Optional[datetime]:
-    try:
-        return datetime.strptime(time, format)
-    except ValueError:
-        return None
+import dateparser.search
+import rutimeparser
+
+
+def time_parser(text: str) -> Optional[datetime]:
+    """Function trying to get date from text"""
+    result = dateparser.search.search_dates(text, languages=("ru",))
+    if not result:
+        # second try with another module
+        result = rutimeparser.parse(result)
+
+    if result:
+        return result[0][1]
+    return None

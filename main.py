@@ -1,4 +1,5 @@
 import asyncio
+import locale
 import logging
 import sys
 from os import getenv
@@ -14,13 +15,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-import db
 import entities
 import states
 import time_parser
 from callbacks import ActionButton
 from entities import Remind
 from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
+
+# Для верного отображения дат
+locale.setlocale(locale.LC_TIME, 'ru_RU')
 
 TOKEN = getenv("BOT_TOKEN")
 bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -33,10 +36,11 @@ scheduler = AsyncIOScheduler()
 # setup data storage
 url = 'sqlite:///example.sqlite'
 scheduler.add_jobstore('sqlalchemy', url=url)
-engine = create_engine(url, echo=True)
+engine = create_engine(url, echo=False)
 Session = sessionmaker(bind=engine)
-#entities.Base.metadata.drop_all(engine)
+# entities.Base.metadata.drop_all(engine)
 entities.Base.metadata.create_all(engine)
+
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
@@ -54,7 +58,7 @@ async def enter_remind_creation(
         "Давай создадим новое напоминание! Для начала введи текст напоминания")
     # Переходим к состоянию "ожидаю ввода текста напоминания"
     await state.set_state(states.CreateNewReminder.entering_text)
-    await callback.answer() # чтобы кнопка не зависала
+    await callback.answer()  # чтобы кнопка не зависала
 
 
 @dp.message(states.CreateNewReminder.entering_text)
@@ -63,7 +67,7 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
 
     await message.reply("Окей, теперь давай определимся со временем\n"
-                        "Вводите дату в формате DD/MM/YY hh:mm")
+                        "Вы можете ввести время в свободной форме, или в формате DD/MM hh:mm")
     # Переходим к состоянию "ожидаю ввода времени напоминания"
     await state.set_state(states.CreateNewReminder.entering_time)
 
@@ -82,7 +86,7 @@ async def enter_remind_text(message: Message, state: FSMContext):
     data = await state.get_data()
     await message.reply(
         "Напоминание создано, давай проверим, всё ли правильно?\n\n"
-        f"Напоминание будет {data['time']}:\n"
+        f"Напоминание будет <b>{parsed_time.strftime('%d %B в %H:%M:%S')}</b>\n"
         f"{data['text']}",
         reply_markup=get_confirm_remind_creation_keyboard()
     )
@@ -95,7 +99,6 @@ async def send_remind(chat_id: str, remind_text: str):
     message_text = ("🔔 Вам новое напоминание!\n"
                     f"💬: {remind_text}")
     await bot.send_message(chat_id, message_text)
-
 
 
 @dp.callback_query(ActionButton.filter(F.action == "confirm_remind_creation"))
@@ -117,11 +120,12 @@ async def confirm_remind_creation(
 
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")
+    await callback.answer()
 
 
 @dp.message(F.text == "/test")
 async def test_command(message: Message):
-    await message.reply(str(db.get_reminds(message.chat.id)))
+    pass
 
 
 async def main() -> None:
