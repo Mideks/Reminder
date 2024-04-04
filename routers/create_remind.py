@@ -50,8 +50,10 @@ async def enter_remind_date(message: Message, state: FSMContext):
         return
 
     now = datetime.now()
+    time_text = parsed_time.strftime('%d %B в %H:%M:%S')
     if parsed_time < now:
-        await message.reply("Нельзя указывать дату из прошлого. Введите другую дату")
+        await message.reply(f"Вы указали {time_text}\n"
+                            "Нельзя указывать дату из прошлого. Введите другую дату")
         return
 
     await state.update_data(time=parsed_time)  # сохраняем введённую дату
@@ -61,7 +63,7 @@ async def enter_remind_date(message: Message, state: FSMContext):
     data = await state.get_data()
     await message.reply(
         "Почти готов, давай проверим, всё ли правильно?\n\n"
-        f"Напоминание будет <b>{parsed_time.strftime('%d %B в %H:%M:%S')}</b>\n"
+        f"Напоминание будет <b>{time_text}</b>\n"
         f"{data['text']}",
         reply_markup=get_confirm_remind_creation_keyboard()
     )
