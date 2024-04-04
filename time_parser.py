@@ -10,7 +10,7 @@ def time_parser(text: str) -> Optional[datetime]:
     result = dateparser.search.search_dates(text, languages=("ru",))
     if not result:
         # second try with another module
-        result = rutimeparser.parse(result)
+        result = rutimeparser.parse(text)
 
     if result:
         return result[0][1]
