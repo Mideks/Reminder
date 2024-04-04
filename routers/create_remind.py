@@ -48,8 +48,14 @@ async def enter_remind_date(message: Message, state: FSMContext):
     if parsed_time is None:
         await message.reply("Неверный формат даты! Попробуйте ещё раз")
         return
+
+    now = datetime.now()
+    if parsed_time < now:
+        await message.reply("Нельзя указывать дату из прошлого. Введите другую дату")
+        return
+
     await state.update_data(time=parsed_time)  # сохраняем введённую дату
-    await state.update_data(entering_time=datetime.now())
+    await state.update_data(entering_time=now)
 
     # получаем ранее записанные данные
     data = await state.get_data()
