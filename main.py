@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import sys
-from datetime import datetime, timedelta
 from os import getenv
 
 from aiogram import Bot, Dispatcher, types, F
@@ -12,11 +11,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 import db
+import entities
 import states
 import time_parser
 from callbacks import ActionButton
+from entities import Remind
 from keyboards import get_menu_keyboard, get_confirm_remind_creation_keyboard
 
 TOKEN = getenv("BOT_TOKEN")
@@ -27,8 +30,13 @@ dp = Dispatcher()
 # Создали планировщик
 scheduler = AsyncIOScheduler()
 
+# setup data storage
 url = 'sqlite:///example.sqlite'
 scheduler.add_jobstore('sqlalchemy', url=url)
+engine = create_engine(url, echo=True)
+Session = sessionmaker(bind=engine)
+#entities.Base.metadata.drop_all(engine)
+entities.Base.metadata.create_all(engine)
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
@@ -98,10 +106,14 @@ async def confirm_remind_creation(
     data = await state.get_data()
 
     # Добавить напоминание в планировщик
-    id = scheduler.add_job(send_remind, "date", run_date=data["time"],
-                      args=(callback.message.chat.id, data["text"]))
+    job = scheduler.add_job(send_remind, "date", run_date=data["time"],
+                            args=(callback.message.chat.id, data["text"]))
 
-    db.add_remind(callback.message.chat.id, data["time"], "", data["text"], id)
+    with Session() as session:
+        new_remind = Remind(user_id=callback.message.chat.id, remind_date=data["time"],
+                            title="", text=data["text"], scheduler_job_id=job.id)
+        session.add(new_remind)
+        session.commit()
 
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")
