@@ -13,7 +13,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 import entities
-from routers import create_remind, commands
+from entities.base import Base
+from routers import create_remind, commands, remind_list
 
 # Для верного отображения дат
 locale.setlocale(locale.LC_TIME, 'ru_RU')
@@ -32,7 +33,7 @@ scheduler.add_jobstore('sqlalchemy', url=url)
 engine = create_engine(url, echo=False)
 db_session: sessionmaker[Session] = sessionmaker(bind=engine)
 # entities.Base.metadata.drop_all(engine)
-entities.Base.metadata.create_all(engine)
+Base.metadata.create_all(engine)
 
 
 async def main() -> None:
@@ -44,8 +45,9 @@ async def main() -> None:
     dp["scheduler"] = scheduler
 
     # подключаем роутеры
-    dp.include_router(create_remind.router)
     dp.include_router(commands.router)
+    dp.include_router(create_remind.router)
+    dp.include_router(remind_list.router)
 
 
     # Запускаем бота

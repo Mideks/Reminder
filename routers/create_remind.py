@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import states
 import time_parser
 from callbacks import ActionButton
-from entities import Remind
+from entities.remind import Remind
 from keyboards import get_confirm_remind_creation_keyboard
 
 from tasks import send_remind

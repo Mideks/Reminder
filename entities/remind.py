@@ -1,12 +1,10 @@
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column, declarative_base, DeclarativeBase
-from sqlalchemy.sql.sqltypes import Integer
-from datetime import datetime
+from sqlalchemy import Integer, DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, Session
 
-class Base(DeclarativeBase):
-    pass
+from entities.base import Base
 
 
 class Remind(Base):
@@ -19,3 +17,12 @@ class Remind(Base):
     title: Mapped[str] = mapped_column(String)
     text: Mapped[str] = mapped_column(String)
     scheduler_job_id: Mapped[str] = mapped_column(String)
+
+
+async def get_user_reminds(session: Session, user_id: int):
+    reminds = session.query(Remind).filter(Remind.user_id == user_id).order_by(Remind.remind_date).all()
+    return reminds
+
+
+def get_remind_by_id(session: Session, remind_id: int) -> Remind:
+    return session.query(Remind).get(remind_id)
