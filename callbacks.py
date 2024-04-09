@@ -18,3 +18,13 @@ class RemindButtonAction(enum.Enum):
 class RemindButton(CallbackData, prefix="remind"):
     remind_id: int
     action: str
+
+
+class NavigateButtonLocation(enum.Enum):
+    main_menu = "main_menu"
+    remind_list = "remind_list"
+
+
+class NavigateButton(CallbackData, prefix="navigate"):
+    location: NavigateButtonLocation
+
