@@ -28,7 +28,7 @@ dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 
 # setup data storage
-url = 'sqlite:///example.sqlite'
+url = 'sqlite:///db.sqlite'
 scheduler.add_jobstore('sqlalchemy', url=url)
 engine = create_engine(url, echo=False)
 db_session: sessionmaker[Session] = sessionmaker(bind=engine)
