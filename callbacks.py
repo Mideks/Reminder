@@ -4,8 +4,16 @@ import enum
 from aiogram.filters.callback_data import CallbackData
 
 
+class ActionButtonAction(enum.Enum):
+    confirm_remind_creation = "confirm_remind_creation"
+    edit_remind_time = "edit_remind_time"
+    edit_remind_text = "edit_remind_text"
+    remind_list = "remind_list"
+    new_remind = "new_remind"
+
+
 class ActionButton(CallbackData, prefix="action"):
-    action: str
+    action: ActionButtonAction
 
 
 class RemindButtonAction(enum.Enum):

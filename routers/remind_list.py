@@ -28,7 +28,7 @@ async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
         await message.edit_text(text, reply_markup=get_remind_list_keyboard(reminds).as_markup())
 
 
-@router.callback_query(ActionButton.filter(F.action == "remind_list"))
+@router.callback_query(ActionButton.filter(F.action == callbacks.ActionButtonAction.remind_list))
 @router.callback_query(callbacks.NavigateButton.filter(F.location == callbacks.NavigateButtonLocation.remind_list))
 async def send_remind_list_handler(callback: CallbackQuery, db_session: sessionmaker[Session]):
     await send_remind_list(callback.message, db_session)

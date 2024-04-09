@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 import states
 import time_parser
-from callbacks import ActionButton
+from callbacks import ActionButton, ActionButtonAction
 from entities.remind import Remind
 from keyboards import get_confirm_remind_creation_keyboard
 
@@ -18,7 +18,7 @@ from tasks import send_remind
 router = Router()
 
 
-@router.callback_query(ActionButton.filter(F.action == "new_reminder"))
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_remind))
 async def enter_remind_creation(
         callback: types.CallbackQuery, callback_data: ActionButton,
         state: FSMContext):
@@ -40,6 +40,20 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await state.set_state(states.CreateNewReminder.entering_time)
 
 
+async def send_confirm_remind_creation(message: Message, state: FSMContext):
+    # получаем ранее записанные данные
+    data = await state.get_data()
+    time_text = data["time"].strftime('%d %B в %H:%M:%S')
+    await message.reply(
+        "Почти готов, давай проверим, всё ли правильно?\n\n"
+        f"Напоминание будет <b>{time_text}</b>\n"
+        f"{data['text']}",
+        reply_markup=get_confirm_remind_creation_keyboard()
+    )
+
+    # Переходим к состоянию "подтверждение создания"
+    await state.set_state(states.CreateNewReminder.confirm_creation)
+
 @router.message(states.CreateNewReminder.entering_time)
 async def enter_remind_date(message: Message, state: FSMContext):
     time = message.text
@@ -58,21 +72,10 @@ async def enter_remind_date(message: Message, state: FSMContext):
 
     await state.update_data(time=parsed_time)  # сохраняем введённую дату
     await state.update_data(entering_time=now)
-
-    # получаем ранее записанные данные
-    data = await state.get_data()
-    await message.reply(
-        "Почти готов, давай проверим, всё ли правильно?\n\n"
-        f"Напоминание будет <b>{time_text}</b>\n"
-        f"{data['text']}",
-        reply_markup=get_confirm_remind_creation_keyboard()
-    )
-
-    # Переходим к состоянию "подтверждение создания"
-    await state.set_state(states.CreateNewReminder.confirm_creation)
+    await send_confirm_remind_creation(message, state)
 
 
-@router.callback_query(ActionButton.filter(F.action == "confirm_remind_creation"))
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.confirm_remind_creation))
 async def confirm_remind_creation(
         callback: types.CallbackQuery, callback_data: ActionButton,
         state: FSMContext, scheduler: AsyncIOScheduler, db_session: sessionmaker[Session]):
@@ -94,3 +97,17 @@ async def confirm_remind_creation(
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")
     await callback.answer()
+
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_text))
+async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("Введите новый текст напоминания")
+    await state.set_state(states.CreateNewReminder.editing_text)
+    await callback.answer()
+
+
+@router.message(states.CreateNewReminder.editing_text)
+async def edit_remind_text(message: Message, state: FSMContext):
+    text = message.text
+    await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
+    await send_confirm_remind_creation(message, state)
