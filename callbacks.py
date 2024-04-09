@@ -9,10 +9,10 @@ class ActionButton(CallbackData, prefix="action"):
 
 
 class RemindButtonAction(enum.Enum):
-    show = 1
-    delete = 2
-    edit_text = 3
-    edit_time = 4
+    show = "show"
+    delete = "delete"
+    edit_text = "edit_text"
+    edit_time = "edit_time"
 
 
 class RemindButton(CallbackData, prefix="remind"):

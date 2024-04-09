@@ -35,7 +35,7 @@ async def send_remind_list_handler(callback: CallbackQuery, db_session: sessionm
     await callback.answer()
 
 
-@router.callback_query(RemindButton.filter(F.action == str(callbacks.RemindButtonAction.show)))
+@router.callback_query(RemindButton.filter(F.action == callbacks.RemindButtonAction.show))
 async def send_remind_menu(
         callback: CallbackQuery, db_session: sessionmaker[Session], callback_data: RemindButton):
     with db_session() as session:
@@ -48,7 +48,7 @@ async def send_remind_menu(
         await callback.answer()
 
 
-@router.callback_query(RemindButton.filter(F.action == str(callbacks.RemindButtonAction.delete)))
+@router.callback_query(RemindButton.filter(F.action == callbacks.RemindButtonAction.delete))
 async def delete_remind(
         callback: CallbackQuery, db_session: sessionmaker[Session],
         callback_data: RemindButton,  scheduler: BaseScheduler):

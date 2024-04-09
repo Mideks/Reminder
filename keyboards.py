@@ -32,7 +32,7 @@ def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
 def get_remind_list_keyboard(reminds: list[Remind]) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     for i, remind in enumerate(reminds, 1):
-        r = RemindButton(remind_id=remind.id, action=str(RemindButtonAction.show))
+        r = RemindButton(remind_id=remind.id, action=RemindButtonAction.show)
         builder.button(text=f"{i}. {remind.text}",
                        callback_data=r)
 
@@ -46,11 +46,11 @@ def get_remind_list_keyboard(reminds: list[Remind]) -> InlineKeyboardBuilder:
 def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     builder.button(text="Удалить",
-                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.delete)))
+                   callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.delete))
     builder.button(text="Редактировать текст",
-                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.edit_text)))
+                   callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.edit_text))
     builder.button(text="Редактировать время",
-                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.edit_time)))
+                   callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.edit_time))
     builder.button(text="🔙 Назад к списку",
                    callback_data=NavigateButton(location=NavigateButtonLocation.remind_list))
     builder.adjust(1)
