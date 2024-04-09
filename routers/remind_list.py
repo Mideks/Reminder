@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 from apscheduler.schedulers.base import BaseScheduler
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -11,10 +11,9 @@ from keyboards import get_remind_list_keyboard, get_remind_menu_markup
 router = Router()
 
 
-@router.callback_query(ActionButton.filter(F.action == "remind_list"))
-async def send_remind_list(callback: CallbackQuery, db_session: sessionmaker[Session]):
+async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
     text = "Вот ваш список ближайших напоминаний:\n\n"
-    user_id = callback.message.chat.id
+    user_id = message.chat.id
 
     with db_session() as session:
         limit = 10
@@ -26,8 +25,13 @@ async def send_remind_list(callback: CallbackQuery, db_session: sessionmaker[Ses
 
         text += "\nНажмите на кнопку ниже чтобы управлять напоминанием"
 
-        await callback.message.reply(text, reply_markup=get_remind_list_keyboard(reminds).as_markup())
-        await callback.answer()
+        await message.edit_text(text, reply_markup=get_remind_list_keyboard(reminds).as_markup())
+
+
+@router.callback_query(ActionButton.filter(F.action == "remind_list"))
+async def send_remind_list_handler(callback: CallbackQuery, db_session: sessionmaker[Session]):
+    await send_remind_list(callback.message, db_session)
+    await callback.answer()
 
 
 @router.callback_query(RemindButton.filter(F.action == str(callbacks.RemindButtonAction.show)))
@@ -39,7 +43,7 @@ async def send_remind_menu(
         text = (f"Напоминание на <b>{str_date}</b>\n\n"
                 f"{remind.text}")
 
-        await callback.message.reply(text, reply_markup=get_remind_menu_markup(remind).as_markup())
+        await callback.message.edit_text(text, reply_markup=get_remind_menu_markup(remind).as_markup())
         await callback.answer()
 
 
@@ -49,9 +53,8 @@ async def delete_remind(
         callback_data: RemindButton,  scheduler: BaseScheduler):
     with db_session() as session:
         _ = delete_remind_by_id(session, scheduler, callback_data.remind_id)
-        text = f"Напоминание было удалено"
-        await callback.message.reply(text)
-        await callback.answer()
+        await callback.answer("Напоминание было удалено")
+        await send_remind_list(callback.message, db_session)
 
 
 
