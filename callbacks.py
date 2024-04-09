@@ -17,7 +17,7 @@ class RemindButtonAction(enum.Enum):
 
 class RemindButton(CallbackData, prefix="remind"):
     remind_id: int
-    action: str
+    action: RemindButtonAction
 
 
 class NavigateButtonLocation(enum.Enum):
