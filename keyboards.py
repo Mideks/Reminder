@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from callbacks import ActionButton, RemindButton
+from callbacks import ActionButton, RemindButton, RemindButtonAction
 from entities.remind import Remind
 
 
@@ -32,7 +32,22 @@ def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
 def get_remind_list_keyboard(reminds: list[Remind]) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     for i, remind in enumerate(reminds, 1):
-        builder.button(text=f"{i}. {remind.text}", callback_data=RemindButton(remind_id=remind.id))
+        r = RemindButton(remind_id=remind.id, action=str(RemindButtonAction.show))
+        builder.button(text=f"{i}. {remind.text}",
+                       callback_data=r)
+    builder.adjust(1)
+
+    return builder
+
+
+def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Удалить",
+                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.delete)))
+    builder.button(text="Редактировать текст",
+                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.edit_text)))
+    builder.button(text="Редактировать время",
+                   callback_data=RemindButton(remind_id=remind.id, action=str(RemindButtonAction.edit_time)))
     builder.adjust(1)
 
     return builder

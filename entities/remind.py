@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
+from apscheduler.jobstores.base import JobLookupError
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.base import BaseScheduler
 from sqlalchemy import Integer, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, Session
 
@@ -26,3 +29,16 @@ async def get_user_reminds(session: Session, user_id: int):
 
 def get_remind_by_id(session: Session, remind_id: int) -> Remind:
     return session.query(Remind).get(remind_id)
+
+
+def delete_remind_by_id(session: Session, scheduler: BaseScheduler, remind_id: int) -> Remind:
+    remind = get_remind_by_id(session, remind_id)
+    try:
+        scheduler.remove_job(remind.scheduler_job_id)
+    except JobLookupError:
+        print(f"Уведомление истекло ({remind.scheduler_job_id})")
+
+    session.delete(remind)
+    session.commit()
+
+    return remind
