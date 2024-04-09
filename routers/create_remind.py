@@ -54,7 +54,9 @@ async def send_confirm_remind_creation(message: Message, state: FSMContext):
     # Переходим к состоянию "подтверждение создания"
     await state.set_state(states.CreateNewReminder.confirm_creation)
 
+
 @router.message(states.CreateNewReminder.entering_time)
+@router.message(states.CreateNewReminder.editing_time)
 async def enter_remind_date(message: Message, state: FSMContext):
     time = message.text
 
@@ -111,3 +113,10 @@ async def edit_remind_text(message: Message, state: FSMContext):
     text = message.text
     await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
     await send_confirm_remind_creation(message, state)
+
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_time))
+async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer("Введите новое время напоминания")
+    await state.set_state(states.CreateNewReminder.editing_time)
+    await callback.answer()
