@@ -12,10 +12,10 @@ router = Router()
 
 
 async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
-    text = "Вот ваш список ближайших напоминаний:\n\n"
-    user_id = message.chat.id
-
     with db_session() as session:
+        user_id = message.chat.id
+        text = "Вот ваш список ближайших напоминаний:\n\n"
+
         limit = 10
         reminds = (await get_user_reminds(session, user_id))[:limit]
         for i, remind in enumerate(reminds, 1):
@@ -24,6 +24,9 @@ async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
                      f"{remind.text}\n")
 
         text += "\nНажмите на кнопку ниже чтобы управлять напоминанием"
+
+        if len(reminds) == 0:
+            text = "У вас нет никаких напоминаний"
 
         await message.edit_text(text, reply_markup=get_remind_list_keyboard(reminds).as_markup())
 
