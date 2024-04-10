@@ -32,7 +32,7 @@ url = 'sqlite:///db.sqlite'
 scheduler.add_jobstore('sqlalchemy', url=url)
 engine = create_engine(url, echo=False)
 db_session: sessionmaker[Session] = sessionmaker(bind=engine)
-# entities.Base.metadata.drop_all(engine)
+# Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
 
 

@@ -23,7 +23,9 @@ class Remind(Base):
 
 
 async def get_user_reminds(session: Session, user_id: int):
-    reminds = session.query(Remind).filter(Remind.user_id == user_id).order_by(Remind.remind_date).all()
+    reminds = (session.query(Remind)
+               .filter(Remind.user_id == user_id, Remind.remind_date > datetime.now())
+               .order_by(Remind.remind_date).all())
     return reminds
 
 
