@@ -120,3 +120,14 @@ async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("Введите новое время напоминания")
     await state.set_state(states.CreateNewReminder.editing_time)
     await callback.answer()
+
+
+@router.message(F.text.lower().startswith("напомни"))
+async def create_remind_from_text_handler(message: Message, state: FSMContext):
+    prefix_len = len("напомни")
+    text = message.text[prefix_len:].lstrip()
+    parsed_time = time_parser.time_parser(text)
+    parsed_text = time_parser.text_parser(text)
+    await state.update_data(time=parsed_time, text=parsed_text )
+
+    await send_confirm_remind_creation(message, state)
