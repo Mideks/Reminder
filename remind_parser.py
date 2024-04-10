@@ -5,7 +5,7 @@ import dateparser.search
 import rutimeparser
 
 
-def time_parser(text: str) -> Optional[datetime]:
+def parse_time(text: str) -> Optional[datetime]:
     """Function trying to get date from text"""
     result = dateparser.search.search_dates(text, languages=("ru",))
     if not result:
@@ -17,7 +17,7 @@ def time_parser(text: str) -> Optional[datetime]:
     return None
 
 
-def text_parser(text: str) -> str:
+def parse_text(text: str) -> str:
     """Function trying to get text without time from text"""
     result = dateparser.search.search_dates(text, languages=("ru",))
     if result:

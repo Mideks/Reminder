@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import sessionmaker, Session
 
 import states
-import time_parser
+import remind_parser
 from callbacks import ActionButton, ActionButtonAction
 from entities.remind import Remind
 from keyboards import get_confirm_remind_creation_keyboard
@@ -60,7 +60,7 @@ async def send_confirm_remind_creation(message: Message, state: FSMContext):
 async def enter_remind_date(message: Message, state: FSMContext):
     time = message.text
 
-    parsed_time = time_parser.time_parser(time)
+    parsed_time = remind_parser.parse_time(time)
     if parsed_time is None:
         await message.reply("Неверный формат даты! Попробуйте ещё раз")
         return
@@ -126,8 +126,8 @@ async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
 async def create_remind_from_text_handler(message: Message, state: FSMContext):
     prefix_len = len("напомни")
     text = message.text[prefix_len:].lstrip()
-    parsed_time = time_parser.time_parser(text)
-    parsed_text = time_parser.text_parser(text)
+    parsed_time = remind_parser.parse_time(text)
+    parsed_text = remind_parser.parse_text(text)
     await state.update_data(time=parsed_time, text=parsed_text )
 
     await send_confirm_remind_creation(message, state)
