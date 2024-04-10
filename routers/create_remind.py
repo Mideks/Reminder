@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import states
 import remind_parser
 from callbacks import ActionButton, ActionButtonAction
+from context import Context
 from entities.remind import Remind
 from keyboards import get_confirm_remind_creation_keyboard
 
@@ -80,17 +81,17 @@ async def enter_remind_date(message: Message, state: FSMContext):
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.confirm_remind_creation))
 async def confirm_remind_creation(
         callback: types.CallbackQuery, callback_data: ActionButton,
-        state: FSMContext, scheduler: AsyncIOScheduler, db_session: sessionmaker[Session]):
+        state: FSMContext, context: Context):
     # Получаем контекст
     data = await state.get_data()
 
     # Считаем время напоминания с учётом времени отправки сообщения
     real_time: datetime = data['time'] + (datetime.now() - data['entering_time'])
     # Добавить напоминание в планировщик
-    job = scheduler.add_job(send_remind, "date", run_date=real_time,
+    job = context.scheduler.add_job(send_remind, "date", run_date=real_time,
                             args=(callback.message.chat.id, data["text"]))
 
-    with db_session() as session:
+    with context.db_session_maker() as session:
         new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time,
                             title="", text=data["text"], scheduler_job_id=job.id)
         session.add(new_remind)

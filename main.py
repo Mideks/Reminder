@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 import entities
+from context import Context
 from entities.base import Base
 from routers import create_remind, commands, remind_list
 
@@ -40,9 +41,9 @@ async def main() -> None:
     # Запуск планировщика тут!!
     scheduler.start()
 
-    # задаём нужные контекстные переменные
-    dp["db_session"] = db_session
-    dp["scheduler"] = scheduler
+    # задаём контекст для бота
+    context = Context(db_session, scheduler)
+    dp["context"] = context
 
     # подключаем роутеры
     dp.include_router(commands.router)

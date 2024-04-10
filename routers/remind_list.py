@@ -5,14 +5,15 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import callbacks
 from callbacks import ActionButton, RemindButton, RemindButtonAction
+from context import Context
 from entities.remind import get_user_reminds, get_remind_by_id, delete_remind_by_id
 from keyboards import get_remind_list_keyboard, get_remind_menu_markup
 
 router = Router()
 
 
-async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
-    with db_session() as session:
+async def send_remind_list(message: Message, context: Context):
+    with context.db_session_maker() as session:
         user_id = message.chat.id
         text = "Вот ваш список ближайших напоминаний:\n\n"
 
@@ -33,15 +34,15 @@ async def send_remind_list(message: Message, db_session: sessionmaker[Session]):
 
 @router.callback_query(ActionButton.filter(F.action == callbacks.ActionButtonAction.remind_list))
 @router.callback_query(callbacks.NavigateButton.filter(F.location == callbacks.NavigateButtonLocation.remind_list))
-async def send_remind_list_handler(callback: CallbackQuery, db_session: sessionmaker[Session]):
-    await send_remind_list(callback.message, db_session)
+async def send_remind_list_handler(callback: CallbackQuery, context: Context):
+    await send_remind_list(callback.message, context)
     await callback.answer()
 
 
 @router.callback_query(RemindButton.filter(F.action == callbacks.RemindButtonAction.show))
 async def send_remind_menu(
-        callback: CallbackQuery, db_session: sessionmaker[Session], callback_data: RemindButton):
-    with db_session() as session:
+        callback: CallbackQuery, context: Context, callback_data: RemindButton):
+    with context.db_session_maker() as session:
         remind = get_remind_by_id(session, callback_data.remind_id)
         str_date = remind.remind_date.strftime('%d %B в %H:%M:%S')
         text = (f"Напоминание на <b>{str_date}</b>\n\n"
@@ -52,13 +53,11 @@ async def send_remind_menu(
 
 
 @router.callback_query(RemindButton.filter(F.action == callbacks.RemindButtonAction.delete))
-async def delete_remind(
-        callback: CallbackQuery, db_session: sessionmaker[Session],
-        callback_data: RemindButton,  scheduler: BaseScheduler):
-    with db_session() as session:
-        _ = delete_remind_by_id(session, scheduler, callback_data.remind_id)
+async def delete_remind(callback: CallbackQuery, callback_data: RemindButton, context: Context):
+    with context.db_session_maker() as session:
+        _ = delete_remind_by_id(session, context.scheduler, callback_data.remind_id)
         await callback.answer("Напоминание было удалено")
-        await send_remind_list(callback.message, db_session)
+        await send_remind_list(callback.message, context)
 
 
 
