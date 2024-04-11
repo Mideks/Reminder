@@ -1,2 +1,2 @@
-print(" LUK - LOOK - LYK")
-print("ANT ass")
+print("LUK - LOOK - LYK")
+print("muravei")
