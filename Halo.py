@@ -1,1 +1,0 @@
-print("LUK - LOOK - LYK")
