@@ -36,7 +36,7 @@ async def enter_remind_text(message: Message, state: FSMContext):
     await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
 
     await message.reply("Окей, теперь давай определимся со временем\n"
-                        "Вы можете ввести время в свободной форме, или в формате DD/MM hh:mm")
+                        "Вы можете ввести время в свободной форме. Например, \"сегодня в 17:00\", \"В следующий четверг\" или в формате DD/MM hh:mm")
     # Переходим к состоянию "ожидаю ввода времени напоминания"
     await state.set_state(states.CreateNewReminder.entering_time)
 
@@ -129,6 +129,6 @@ async def create_remind_from_text_handler(message: Message, state: FSMContext):
     text = message.text[prefix_len:].lstrip()
     parsed_time = remind_parser.parse_time(text)
     parsed_text = remind_parser.parse_text(text)
-    await state.update_data(time=parsed_time, text=parsed_text )
+    await state.update_data(time=parsed_time, text=parsed_text, entering_time=datetime.now())
 
     await send_confirm_remind_creation(message, state)

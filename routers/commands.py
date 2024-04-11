@@ -15,7 +15,9 @@ async def test_command(message: Message):
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
+    await message.answer("Привет! Я бот напоминалка.  Ты можешь создать напоминание, нажав кнопку ниже или написать \"Напомни [что] в [когда]\"" , reply_markup=get_menu_keyboard())
+
+
 
 
 @router.callback_query(callbacks.NavigateButton.filter(F.location == callbacks.NavigateButtonLocation.main_menu))
