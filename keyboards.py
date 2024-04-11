@@ -9,8 +9,8 @@ from entities.remind import Remind
 def get_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    builder.button(text="🔔 Новое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_remind))
-    builder.button(text="📋 Список напоминаний", callback_data=ActionButton(action=ActionButtonAction.remind_list))
+    builder.button(text="Новое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_remind))
+    builder.button(text="Список напоминаний", callback_data=ActionButton(action=ActionButtonAction.remind_list))
 
     return builder.as_markup()
 
@@ -46,11 +46,11 @@ def get_remind_list_keyboard(reminds: list[Remind]) -> InlineKeyboardBuilder:
 
 def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
-    builder.button(text="🗑 Удалить",
+    builder.button(text="Удалить",
                    callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.delete))
-    builder.button(text="✍️ Редактировать текст",
+    builder.button(text="Редактировать текст",
                    callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.edit_text))
-    builder.button(text="⌛️ Редактировать время",
+    builder.button(text="Редактировать время",
                    callback_data=RemindButton(remind_id=remind.id, action=RemindButtonAction.edit_time))
     builder.button(text="🔙 Назад к списку",
                    callback_data=NavigateButton(location=NavigateButtonLocation.remind_list))
