@@ -17,6 +17,9 @@ async def play_command(message: Message):
     await message.answer("Авсеп тебе говорит привет!")
 
 
+@router.message(Command('lesson'))
+async def lesson_command(message: Message):
+    await message.answer("Тестовая команда с урока")
 
 
 @router.message(Command('tust'))
@@ -24,9 +27,11 @@ async def tust_command(message: Message):
     await message.answer("|Семён любит ЧЕБУПЕЛИ|")
 
 
-@router.message(Command('грустно'))
-async def tust_command(message: Message):
+@router.message(Command('sad'))
+async def sad_command(message: Message):
     await message.answer("ничего не хочу")
+
+
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
