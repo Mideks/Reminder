@@ -12,6 +12,11 @@ router = Router()
 async def test_command(message: Message):
     pass
 
+@router.message(Command('play'))
+async def play_command(message: Message):
+    await message.answer("Авсеп тебе говорит привет!")
+
+
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
