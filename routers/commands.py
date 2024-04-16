@@ -13,6 +13,12 @@ async def test_command(message: Message):
     pass
 
 
+
+@router.message(Command('tust'))
+async def tust_command(message: Message):
+    await message.answer("|Семён любит ЧЕБУПЕЛИ|")
+
+
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
