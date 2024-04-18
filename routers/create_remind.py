@@ -18,6 +18,7 @@ from tasks import send_remind
 
 router = Router()
 
+# todo: создать обработчик для выбора в какой группе создаётся напоминание
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_remind))
 async def enter_remind_creation(
@@ -92,12 +93,14 @@ async def confirm_remind_creation(
                             args=(callback.message.chat.id, data["text"]))
 
     with context.db_session_maker() as session:
+        # todo: добавить группу напоминания
         new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time,
                             title="", text=data["text"], scheduler_job_id=job.id)
         session.add(new_remind)
         session.commit()
 
     # Отправить сообщение
+    # todo: если это групповое напоминание, сделать рассылку напоминания всем в группе
     await callback.message.answer("☑️ Напоминание успешно создано")
     await callback.answer()
 
