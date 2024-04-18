@@ -1,9 +1,11 @@
+from os import getenv
+
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
 import asyncio
 import requests
 # код работает но его нужно связать с основной частью
-TOKEN ='ничего не увидите))'
+TOKEN =getenv("BOT_TOKEN")
 bot = Bot(TOKEN)
 dp = Dispatcher()
 
@@ -28,7 +30,7 @@ async def get_weather(message: types.Message):
                              f'Ощущается как:{temperature_feels}\n'
                              f'Скорость ветра:{wind_speed} м/с\n'
                              f'Облачность: {cloud_cover}\n'
-                             f'Влажность: {humiditi}%S')
+                             f'Влажность: {humiditi}%')
 
     except KeyError:
         await message.answer(f'Не удалось определить город: {city}')
