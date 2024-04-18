@@ -1,26 +1,30 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from apscheduler.jobstores.base import JobLookupError
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.base import BaseScheduler
-from sqlalchemy import Integer, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy import Integer, DateTime, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, Session, relationship
 
 from entities.base import Base
 
+if TYPE_CHECKING:
+    from .remind_group import RemindGroup
+    from .user import User
 
 class Remind(Base):
     __tablename__ = 'reminders'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer)
-    creation_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="reminds")
+
+    remind_group_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('remind_groups.id'), nullable=True)
+    remind_group: Mapped[Optional["RemindGroup"]] = relationship("RemindGroup", back_populates="reminds")
+
     remind_date: Mapped[datetime] = mapped_column(DateTime)
-    title: Mapped[str] = mapped_column(String)
     text: Mapped[str] = mapped_column(String)
     scheduler_job_id: Mapped[str] = mapped_column(String)
-
 
 async def get_user_reminds(session: Session, user_id: int):
     reminds = (session.query(Remind)
