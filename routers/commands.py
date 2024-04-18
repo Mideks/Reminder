@@ -24,7 +24,7 @@ async def tust_command(message: Message):
     await message.answer("|Семён любит ЧЕБУПЕЛИ|")
 
 
-@router.message(Command('грустно'))
+@router.message(Command('seriu'))
 async def tust_command(message: Message):
     await message.answer("ничего не хочу")
 @router.message(CommandStart())
