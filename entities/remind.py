@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Type
 
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.schedulers.base import BaseScheduler
@@ -11,6 +11,7 @@ from entities.base import Base
 if TYPE_CHECKING:
     from .remind_group import RemindGroup
     from .user import User
+
 
 class Remind(Base):
     __tablename__ = 'reminders'
@@ -26,7 +27,17 @@ class Remind(Base):
     text: Mapped[str] = mapped_column(String)
     scheduler_job_id: Mapped[str] = mapped_column(String)
 
-async def get_user_reminds(session: Session, user_id: int):
+
+def create_remind(session: Session, user_id: int, remind_date: datetime, text: str, scheduler_job_id: str,
+                  remind_group_id: Optional[int] = None) -> Remind:
+    pass
+
+
+def get_group_reminds(session: Session, remind_group_id: int) -> list[Type[Remind]]:
+    pass
+
+
+async def get_user_reminds(session: Session, user_id: int) -> list[Type[Remind]]:
     reminds = (session.query(Remind)
                .filter(Remind.user_id == user_id, Remind.remind_date > datetime.now())
                .order_by(Remind.remind_date).all())
