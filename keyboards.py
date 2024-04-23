@@ -10,10 +10,9 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.button(text="Новое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_remind))
+    builder.button(text="Новое групповое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_group_remind))
     builder.button(text="Список напоминаний", callback_data=ActionButton(action=ActionButtonAction.remind_list))
-    builder.button(text="Групповое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_group_remind))
-
-
+    builder.adjust(1, 1)
     return builder.as_markup()
 
 

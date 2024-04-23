@@ -10,7 +10,7 @@ class ActionButtonAction(enum.Enum):
     edit_remind_text = "edit_remind_text"
     remind_list = "remind_list"
     new_remind = "new_remind"
-
+    new_group_remind = 'new_group_remind'
 
 class ActionButton(CallbackData, prefix="action"):
     action: ActionButtonAction
