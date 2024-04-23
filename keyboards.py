@@ -11,8 +11,8 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
 
     builder.button(text="Новое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_remind))
     builder.button(text="Список напоминаний", callback_data=ActionButton(action=ActionButtonAction.remind_list))
-    builder.button(text="Групповое напоминание", callback_data=ActionButton(action=ActionButtonAction.remind_list))
-    # todo: добавить кнопку создания группового напоминания
+    builder.button(text="Групповое напоминание", callback_data=ActionButton(action=ActionButtonAction.group_reminder_list))
+
 
     return builder.as_markup()
 
