@@ -36,8 +36,11 @@ def change_remind_group_name(session: Session,  remind_group_id: int, new_name: 
     pass
 
 
-def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int) -> None:
-    pass
+async def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int, text: str) -> None:
+    remind_group: RemindGroup = session.query(RemindGroup).get(remind_group_id)
+
+    for user in remind_group.users:
+        await bot.send_message(user.id, text)
 
 
 def get_remind_group_join_link(session: Session, remind_group_id: int) -> str:
