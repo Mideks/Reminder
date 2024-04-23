@@ -24,12 +24,12 @@ async def lesson_command(message: Message):
 
 @router.message(Command('tust'))
 async def tust_command(message: Message):
-    await message.answer("Дан гений")
+    await message.answer("ДанЛЬМЭН гений")
 
 
 @router.message(Command('sad'))
 async def sad_command(message: Message):
-    await message.answer("ничего не хочу")
+    await message.answer("ничего яне хочу")
 
 
 @router.message(CommandStart())
