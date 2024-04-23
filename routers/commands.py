@@ -29,7 +29,7 @@ async def tust_command(message: Message):
 
 @router.message(Command('sad'))
 async def sad_command(message: Message):
-    await message.answer("ничего яЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯЯ не хочу")
+    await message.answer("ничего яне хочу")
 
 
 @router.message(CommandStart())
