@@ -1,13 +1,16 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, Type
 
 from apscheduler.jobstores.base import JobLookupError
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.base import BaseScheduler
-from sqlalchemy import Integer, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy import Integer, DateTime, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, Session, relationship
 
 from entities.base import Base
+
+if TYPE_CHECKING:
+    from .remind_group import RemindGroup
+    from .user import User
 
 
 class Remind(Base):
@@ -15,14 +18,26 @@ class Remind(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer)
-    creation_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="reminds")
+
+    remind_group_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('remind_groups.id'), nullable=True)
+    remind_group: Mapped[Optional["RemindGroup"]] = relationship("RemindGroup", back_populates="reminds")
+
     remind_date: Mapped[datetime] = mapped_column(DateTime)
-    title: Mapped[str] = mapped_column(String)
     text: Mapped[str] = mapped_column(String)
     scheduler_job_id: Mapped[str] = mapped_column(String)
 
 
-async def get_user_reminds(session: Session, user_id: int):
+def create_remind(session: Session, user_id: int, remind_date: datetime, text: str, scheduler_job_id: str,
+                  remind_group_id: Optional[int] = None) -> Remind:
+    pass
+
+
+def get_group_reminds(session: Session, remind_group_id: int) -> list[Type[Remind]]:
+    pass
+
+
+async def get_user_reminds(session: Session, user_id: int) -> list[Type[Remind]]:
     reminds = (session.query(Remind)
                .filter(Remind.user_id == user_id, Remind.remind_date > datetime.now())
                .order_by(Remind.remind_date).all())

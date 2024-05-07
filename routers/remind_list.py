@@ -11,6 +11,7 @@ from keyboards import get_remind_list_keyboard, get_remind_menu_markup
 
 router = Router()
 
+# todo: добавить выбор группы, по которой смотрим напоминания
 
 async def send_remind_list(message: Message, context: Context):
     with context.db_session_maker() as session:
@@ -60,6 +61,8 @@ async def delete_remind(callback: CallbackQuery, callback_data: RemindButton, co
         await send_remind_list(callback.message, context)
 
 
-
+# todo: добавить редактирование времени напоминания
+# todo: добавить редактирование текста напоминания
+# todo: отправка уведомления об изменении всем в группе (если есть)
 
 

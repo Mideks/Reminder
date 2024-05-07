@@ -5,6 +5,8 @@ from aiogram.filters.command import Command
 import asyncio
 import requests
 # код работает но его нужно связать с основной частью
+
+
 TOKEN =getenv("BOT_TOKEN")
 bot = Bot(TOKEN)
 dp = Dispatcher()
@@ -45,3 +47,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+

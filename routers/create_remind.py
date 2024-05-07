@@ -12,12 +12,14 @@ import remind_parser
 from callbacks import ActionButton, ActionButtonAction
 from context import Context
 from entities.remind import Remind
+from entities.remind_group import send_message_to_remind_group
 from keyboards import get_confirm_remind_creation_keyboard
 
 from tasks import send_remind
 
 router = Router()
 
+# todo: создать обработчик для выбора в какой группе создаётся напоминание
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_remind))
 async def enter_remind_creation(
@@ -92,10 +94,19 @@ async def confirm_remind_creation(
                             args=(callback.message.chat.id, data["text"]))
 
     with context.db_session_maker() as session:
+        # todo: добавить группу напоминания
         new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time,
                             title="", text=data["text"], scheduler_job_id=job.id)
         session.add(new_remind)
         session.commit()
+
+    # todo: получение id группы напоминаний, если выбрана
+    remind_group_id: int = None
+    if remind_group_id is not None:
+        time_text = real_time.strftime('%d %B в %H:%M:%S')
+        text = f'Создано новое групповое напоминание:\n' \
+               f'{time_text},{data["text"]}'
+        await send_message_to_remind_group(context.db_session_maker(), callback.bot, remind_group_id, text)
 
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")
