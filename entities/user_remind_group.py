@@ -14,7 +14,7 @@ class Role(enum.Enum):
     owner = "owner"
 
 
-class UserRemindGroupAssociation(Base):
+class UserRemindGroup(Base):
     __tablename__ = 'user_remind_group'
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True)
