@@ -81,6 +81,7 @@ def change_remind_group_name(session: Session, remind_group_id: int, new_name: s
         session.commit()
 
 
+
 def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int) -> None:
     """
     Sends a message to all users in a remind group.
