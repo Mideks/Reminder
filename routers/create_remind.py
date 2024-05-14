@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import aiogram
 from aiogram import F, types, Router
@@ -16,6 +17,8 @@ from entities.remind_group import send_message_to_remind_group
 from keyboards import get_confirm_remind_creation_keyboard
 
 from tasks import send_remind
+
+TIME_FORMAT = '%d %B в %H:%M:%S'
 
 router = Router()
 
@@ -46,7 +49,7 @@ async def enter_remind_text(message: Message, state: FSMContext):
 async def send_confirm_remind_creation(message: Message, state: FSMContext):
     # получаем ранее записанные данные
     data = await state.get_data()
-    time_text = data["time"].strftime('%d %B в %H:%M:%S')
+    time_text = data["time"].strftime(TIME_FORMAT)
     await message.reply(
         "Почти готов, давай проверим, всё ли правильно?\n\n"
         f"Напоминание будет <b>{time_text}</b>\n"
@@ -69,7 +72,7 @@ async def enter_remind_date(message: Message, state: FSMContext):
         return
 
     now = datetime.now()
-    time_text = parsed_time.strftime('%d %B в %H:%M:%S')
+    time_text = parsed_time.strftime(TIME_FORMAT)
     if parsed_time < now:
         await message.reply(f"Вы указали {time_text}\n"
                             "Нельзя указывать дату из прошлого. Введите другую дату")
@@ -95,15 +98,14 @@ async def confirm_remind_creation(
 
     with context.db_session_maker() as session:
         # todo: добавить группу напоминания
-        new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time,
-                            title="", text=data["text"], scheduler_job_id=job.id)
+        new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time, text=data["text"], scheduler_job_id=job.id)
         session.add(new_remind)
         session.commit()
 
     # todo: получение id группы напоминаний, если выбрана
-    remind_group_id: int = None
+    remind_group_id: Optional[int] = None
     if remind_group_id is not None:
-        time_text = real_time.strftime('%d %B в %H:%M:%S')
+        time_text = real_time.strftime(TIME_FORMAT)
         text = f'Создано новое групповое напоминание:\n' \
                f'{time_text},{data["text"]}'
         await send_message_to_remind_group(context.db_session_maker(), callback.bot, remind_group_id, text)

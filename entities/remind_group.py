@@ -28,7 +28,7 @@ class RemindGroup(Base):
     name: Mapped[str] = mapped_column(String)
 
     # Relationship to User through the association table
-    users: Mapped[List[User]] = relationship("User", secondary="user_remind_group", back_populates="remind_groups")
+    users: Mapped[List['User']] = relationship("User", secondary="user_remind_group", back_populates="groups")
 
     # Relationship to Remind
     reminds: Mapped[List[Remind]] = relationship("Remind", back_populates="remind_group")
@@ -82,7 +82,7 @@ def change_remind_group_name(session: Session, remind_group_id: int, new_name: s
 
 
 
-def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int) -> None:
+async def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int, text: str) -> None:
     """
     Sends a message to all users in a remind group.
 
@@ -94,7 +94,7 @@ def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: in
     group = session.query(RemindGroup).get(remind_group_id)
     if group:
         for user in group.users:
-            bot.send_message(user.id, f"Message to {user.name} in group {group.name}")
+            bot.send_message(user.id, text)
 
 
 async def get_remind_group_join_link(bot: Bot, remind_group_id: str) -> str:

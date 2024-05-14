@@ -14,7 +14,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     # Relationship to Remind
-    reminds: Mapped[List[Remind]] = relationship("Remind", back_populates="user")
+    reminds: Mapped[List['Remind']] = relationship("Remind", back_populates="user")
 
     # Relationship to Group
     groups: Mapped[List[RemindGroup]] = relationship("RemindGroup", secondary="user_remind_group",
