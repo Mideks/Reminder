@@ -1,50 +1,20 @@
-from os import getenv
-
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters.command import Command
-import asyncio
-import requests
-# код работает но его нужно связать с основной частью
-
-
-TOKEN =getenv("BOT_TOKEN")
-bot = Bot(TOKEN)
-dp = Dispatcher()
-
-@dp.message(Command('!Погода'))
-async def start_command(message: types.Message):
-    await message.answer('Привет. Чтобы получить покоду, укажи название города:')
-
-@dp.message(F.text)
-async def get_weather(message: types.Message):
-    city = message.text
-    try:
-        url= f'https://api.openweathermap.org/data/2.5/weather?q='+city+'&units=metric&lang=ru&appid=79d1ca96933b0328e1c7e3e7a26cb347'
-        weather_data = requests.get(url).json()
-        temperature=weather_data['main']['temp']
-        temperature_feels=weather_data['main']['feels_like']
-        wind_speed=weather_data['wind']['speed']
-        cloud_cover=weather_data['weather'][0]['description']
-        humiditi=weather_data['main']['humidity']
-
-
-        await message.answer(f'Температура воздуха: {temperature}\n'
-                             f'Ощущается как:{temperature_feels}\n'
-                             f'Скорость ветра:{wind_speed} м/с\n'
-                             f'Облачность: {cloud_cover}\n'
-                             f'Влажность: {humiditi}%')
-
-    except KeyError:
-        await message.answer(f'Не удалось определить город: {city}')
-
-
-
-
-async def main():
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
-
+# from telegram.ext import Updater, CommandHandler, MessageHandler, filters
+# from revChatGPT.V1 import Chatbot
+#
+# TOKENTG = "TELEGRAM_TOKEN"
+# TOKENGPT = "CHATGPT_TOKEN"
+# updater = Updater(TOKENTG)
+# chatbot = Chatbot(config={"access_token":TOKENGPT})
+#
+# def chatgpt_reply(update, context):
+#   context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+#   text = update.message.text
+#   reply = chatbot.ask(text)
+#   update.message.reply_text(reply)
+#
+# echo_handler = MessageHandler(Filters.text & (~Filters.command), chatgpt_reply)
+# updater.dispatcher.add_handler(echo_handler)
+#
+# updater.start_polling()
+# updater.idle()
+# #потом доработаю(
