@@ -11,3 +11,11 @@ create_group_success = (
     "Ссылка:\n"
     "{link}"
 )
+user_already_in_group = "Вы уже в группе #{remind_group_id}. Ливните."
+user_joined_to_group = "Будем считать что вы теперь в группе #{remind_group_id}"
+show_groups_list = "Вот список групп, в которых вы состоите. Выберите группу для просмотра и редактирования"
+group_management = (
+    "Выберите действие с {name} (#{id})\n\n"
+    "Ссылка на вашу группочку:\n"
+    "{link}"
+)

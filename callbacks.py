@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+from typing import Optional
 
 from aiogram.filters.callback_data import CallbackData
 
@@ -11,9 +12,17 @@ class ActionButtonAction(enum.Enum):
     remind_list = "remind_list"
     new_remind = "new_remind"
     new_group_remind = 'new_group_remind'
+    show_group_list = "show_group_list"
+    show_group = "show_group"
+    remind_group_member_management = "remind_group_member_management"
+    change_remind_group_name = "change_remind_group_name"
+    leave_from_remind_group = "leave_from_remind_group"
+    delete_remind_group = "delete_remind_group"
+
 
 class ActionButton(CallbackData, prefix="action"):
     action: ActionButtonAction
+    data: Optional[str] = None
 
 
 class RemindButtonAction(enum.Enum):

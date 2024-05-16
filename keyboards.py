@@ -1,16 +1,19 @@
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+import texts.buttons
 from callbacks import ActionButton, RemindButton, RemindButtonAction, NavigateButton, NavigateButtonLocation, \
     ActionButtonAction
 from entities.remind import Remind
+from entities.remind_group import RemindGroup
 
 
 def get_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.button(text="Новое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_remind))
-    builder.button(text="Новое групповое напоминание", callback_data=ActionButton(action=ActionButtonAction.new_group_remind))
+    builder.button(text="Новое групповое напоминание",
+                   callback_data=ActionButton(action=ActionButtonAction.new_group_remind))
     builder.button(text="Список напоминаний", callback_data=ActionButton(action=ActionButtonAction.remind_list))
     builder.adjust(1, 1)
     return builder.as_markup()
@@ -58,3 +61,33 @@ def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
     builder.adjust(1)
 
     return builder
+
+
+def get_groups_list_keyboard(groups: list[RemindGroup]) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    for group in groups:
+        text = f"{group.name} (#{group.id})"
+        kb.button(text=text,
+                  callback_data=ActionButton(action=ActionButtonAction.show_group, data=f"{group.id}"))
+    kb.adjust(1)
+    return kb
+
+
+def get_grop_management_keyboard(group: RemindGroup, is_owner: bool = False) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+
+    kb.button(text=texts.buttons.leave_from_remind_group,
+              callback_data=ActionButton(action=ActionButtonAction.leave_from_remind_group, data=f"{group.id}"))
+    kb.button(text=texts.buttons.change_remind_group_name,
+              callback_data=ActionButton(action=ActionButtonAction.change_remind_group_name, data=f"{group.id}"))
+    kb.button(text=texts.buttons.remind_group_member_management,
+              callback_data=ActionButton(action=ActionButtonAction.remind_group_member_management, data=f"{group.id}"))
+    if is_owner:
+        kb.button(text=texts.buttons.delete_remind_group,
+                  callback_data=ActionButton(action=ActionButtonAction.delete_remind_group, data=f"{group.id}"))
+    kb.button(text=texts.buttons.back_to_group_list,
+              callback_data=ActionButton(action=ActionButtonAction.show_group_list))
+
+    kb.adjust(1)
+
+    return kb

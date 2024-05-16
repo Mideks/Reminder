@@ -2,7 +2,6 @@ from typing import List, TYPE_CHECKING
 
 from sqlalchemy import Integer
 from sqlalchemy.orm import relationship, mapped_column, Mapped, Session
-
 from entities.base import Base
 
 if TYPE_CHECKING:
@@ -32,3 +31,7 @@ def create_user_if_not_exists(session: Session, user_id: int) -> bool:
     session.add(new_user)
     session.commit()
     return True
+
+
+def get_user(session: Session , user_id: id) -> User:
+    return session.query(User).get(user_id)
