@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Coroutine
 
 from aiogram import Bot
 from aiogram.utils.deep_linking import create_start_link
@@ -49,6 +49,7 @@ def create_remind_group(session: Session, name: str, owner_id: int) -> RemindGro
     new_group = RemindGroup(name=name)
     session.add(new_group)
     session.commit()
+    remind_group_join_user(session, owner_id, new_group.id, Role.owner)
     return new_group
 
 
@@ -94,7 +95,7 @@ async def send_message_to_remind_group(session: Session, bot: Bot, remind_group_
     group = session.query(RemindGroup).get(remind_group_id)
     if group:
         for user in group.users:
-            bot.send_message(user.id, text)
+            await bot.send_message(user.id, text)
 
 
 async def get_remind_group_join_link(bot: Bot, remind_group_id: str) -> str:
@@ -109,11 +110,11 @@ async def get_remind_group_join_link(bot: Bot, remind_group_id: str) -> str:
     - str: A deep link that can be used to start the bot with the specified payload.
     """
     # The payload includes the action ("join_group") and the group ID.
-    payload = f"join_group:{remind_group_id}"
+    payload = f"join_{remind_group_id}"
     return await create_start_link(bot, payload)
 
 
-def remind_group_join_user(session: Session, user_id: int, remind_group_id: int, role: Role = Role.member) -> None:
+def remind_group_join_user(session: Session, user_id: int, remind_group_id: int, role: Role = Role.member) -> bool:
     """
     Adds a user to a remind group with a specified role.
 
@@ -122,14 +123,20 @@ def remind_group_join_user(session: Session, user_id: int, remind_group_id: int,
     - user_id (int): The ID of the user to add to the group.
     - remind_group_id (int): The ID of the remind group to add the user to.
     - role (Role, optional): The role of the user in the group. Defaults to Role.member.
+
+    Returns:
+    - bool: If True - user successful added to group. False is already in group.
     """
-    user = session.query(User).get(user_id)
-    if user:
-        # Check if the user is not already in the specified remind group
-        if not any(group.id == remind_group_id for group in user.remind_groups):
-            new_join = UserRemindGroup(user_id=user.id, remind_group_id=remind_group_id, role=role.name)
-            session.add(new_join)
-            session.commit()
+    user: User = session.query(User).get(user_id)
+    # Check if the user is not already in the specified remind group
+    if not user:
+        raise ValueError("User does not exists id database")
+    if any(group.id == remind_group_id for group in user.groups):
+        return False
+    new_join = UserRemindGroup(user_id=user.id, remind_group_id=remind_group_id, role=role.name)
+    session.add(new_join)
+    session.commit()
+    return True
 
 
 def remind_group_kick_user(session: Session, user_id: int, remind_group_id: int) -> None:
@@ -142,9 +149,10 @@ def remind_group_kick_user(session: Session, user_id: int, remind_group_id: int)
     - remind_group_id (int): The ID of the remind group to remove the user from.
     """
     user = session.query(User).get(user_id)
-    if user:
-        # Check if the user is in the specified remind group
-        if any(group.id == remind_group_id for group in user.remind_groups):
-            session.query(UserRemindGroup).filter(UserRemindGroup.user_id == user.id,
-                                                  UserRemindGroup.remind_group_id == remind_group_id).delete()
-            session.commit()
+    # Check if the user is in the specified remind group
+    if not user:
+        raise ValueError("User does not exists id database")
+    if any(group.id == remind_group_id for group in user.remind_groups):
+        session.query(UserRemindGroup).filter(UserRemindGroup.user_id == user.id,
+                                              UserRemindGroup.remind_group_id == remind_group_id).delete()
+        session.commit()

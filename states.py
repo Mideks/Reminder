@@ -9,3 +9,7 @@ class CreateNewReminder(StatesGroup):
     finish_creation = State()  # завершение создания напоминания
     editing_text = State() # редактируем текст
     editing_time = State() # редактируем время
+
+
+class CreateReminderGroup(StatesGroup):
+    entering_name = State()
