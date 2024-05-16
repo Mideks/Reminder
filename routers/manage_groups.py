@@ -43,12 +43,20 @@ async def group_create_entering_name_handler(message: Message, context: Context,
 ))
 async def join_group_command(message: Message, command: CommandObject, context: Context):
     remind_group_id = int(command.args.split("_")[1])
-    user_id = message.from_user.id
-    result = entities.remind_group.remind_group_join_user(context.db_session_maker(), user_id, remind_group_id)
+    user = message.from_user
+    session = context.db_session_maker()
+    entities.user.update_user(session, user.id, user.first_name, user.last_name)
+
+    group = entities.remind_group.get_remind_group(session, remind_group_id)
+    db_user = entities.user.get_user(session, user.id)
+    result = entities.remind_group.remind_group_join_user(session, user.id, remind_group_id)
     if result:
-        await message.answer(texts.messages.user_joined_to_group.format(remind_group_id=remind_group_id))
+        await message.answer(texts.messages.user_joined_to_group.format(name=group.name, id=remind_group_id))
+        text = texts.messages.user_join_to_remind_group_notification.format(
+            user_name=db_user.first_name, group_name=group.name, group_id=remind_group_id)
+        await entities.remind_group.send_message_to_remind_group(session, message.bot, remind_group_id, text, {user.id})
     else:
-        await message.answer(texts.messages.user_already_in_group.format(remind_group_id=remind_group_id))
+        await message.answer(texts.messages.user_already_in_group.format(name=group.name, id=remind_group_id))
 
 
 @router.message(Command('group_sending'))
@@ -107,3 +115,27 @@ async def delete_remind_group_callback(callback: CallbackQuery, callback_data: c
     else:
         await callback.answer(texts.messages.delete_remind_group_fail)
 
+
+@router.callback_query(
+    callbacks.ActionButton.filter((F.action == callbacks.ActionButtonAction.leave_from_remind_group)))
+async def leave_from_remind_group_callback(
+        callback: CallbackQuery, callback_data: callbacks.ActionButton, context: Context):
+    group_id = int(callback_data.data)
+    session = context.db_session_maker()
+    group = entities.remind_group.get_remind_group(session, group_id)
+    user_id = callback.from_user.id
+    user = entities.user.get_user(session, user_id)
+
+    if group:
+        kicked = entities.remind_group.remind_group_kick_user(session, group_id, user_id)
+        if kicked:
+            await callback.message.answer(texts.messages.leave_from_remind_group.format(
+                id=group_id, name=group.name))
+            text = texts.messages.leave_from_remind_group_notification.format(
+                user_name=user.first_name, group_name=group.name, group_id=group_id)
+            await entities.remind_group.send_message_to_remind_group(session, callback.bot, group_id, text)
+            await callback.answer()
+        else:
+            await callback.answer(texts.messages.leave_from_remind_group_fail)
+    else:
+        await callback.answer(texts.messages.remind_group_does_not_exists_error)

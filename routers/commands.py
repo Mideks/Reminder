@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery
 import callbacks
 import texts.messages
 from context import Context
-from entities.user import create_user_if_not_exists
+from entities.user import update_user
 from keyboards import get_menu_keyboard
 
 router = Router()
@@ -17,7 +17,8 @@ router = Router()
 @router.message(CommandStart(magic=~F.args))
 async def command_start_handler(message: Message, context: Context, command: CommandObject) -> None:
     await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
-    create_user_if_not_exists(context.db_session_maker(), message.from_user.id)
+    user = message.from_user
+    update_user(context.db_session_maker(), user.id, user.first_name, user.last_name)
 
 
 @router.message(Command("cancel"))

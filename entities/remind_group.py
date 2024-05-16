@@ -115,10 +115,12 @@ def change_remind_group_name(session: Session, remind_group_id: int, new_name: s
         session.commit()
 
 
-async def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int, text: str) -> None:
+async def send_message_to_remind_group(
+        session: Session, bot: Bot, remind_group_id: int, text: str, ignore_users: Optional[set[int]] = None) -> None:
     """
     Sends a message to all users in a reminder group.
 
+    :param ignore_users: A set of user_id's that will be ignoring
     :param session: The SQLAlchemy session to use for database operations.
     :param bot: The aiogram Bot instance to send messages through.
     :param remind_group_id: The ID of the reminder group to send messages to.
@@ -127,6 +129,8 @@ async def send_message_to_remind_group(session: Session, bot: Bot, remind_group_
     group = get_remind_group(session, remind_group_id)
     if group:
         for user in group.users:
+            if ignore_users and user.id in ignore_users:
+                continue
             await bot.send_message(user.id, text)
 
 
@@ -168,19 +172,27 @@ def remind_group_join_user(session: Session, user_id: int, remind_group_id: int,
     return True
 
 
-def remind_group_kick_user(session: Session, user_id: int, remind_group_id: int) -> None:
+def remind_group_kick_user(session: Session, remind_group_id: int, user_id: int) -> bool:
     """
     Removes a user from a reminder group.
 
     :param session: The SQLAlchemy session to use for database operations.
     :param user_id: The ID of the user to remove from the group.
     :param remind_group_id: The ID of the reminder group to remove the user from.
+
+    :return: If user was in group return True, else return False
     """
-    user = session.query(User).get(user_id)
+    user: User = session.query(User).get(user_id)
     # Check if the user is in the specified remind group
     if not user:
         raise ValueError("User does not exists id database")
-    if any(group.id == remind_group_id for group in user.remind_groups):
-        session.query(UserRemindGroup).filter(UserRemindGroup.user_id == user.id,
-                                              UserRemindGroup.remind_group_id == remind_group_id).delete()
-        session.commit()
+
+    if not any(group.id == remind_group_id for group in user.groups):
+        return False
+
+    session.query(UserRemindGroup).filter(
+        UserRemindGroup.user_id == user.id,
+        UserRemindGroup.remind_group_id == remind_group_id).delete()
+
+    session.commit()
+    return True
