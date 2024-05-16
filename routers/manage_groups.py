@@ -88,3 +88,22 @@ async def show_group_callback(
     await callback.message.answer(text,
                                   reply_markup=keyboards.get_grop_management_keyboard(group, is_owner).as_markup())
     await callback.answer()
+
+
+@router.callback_query(callbacks.ActionButton.filter((F.action == callbacks.ActionButtonAction.delete_remind_group)))
+async def delete_remind_group_callback(callback: CallbackQuery, callback_data: callbacks.ActionButton, context: Context):
+    group_id = int(callback_data.data)
+    session = context.db_session_maker()
+    group = entities.remind_group.get_remind_group(session, group_id)
+
+    if group:
+        await callback.message.answer(
+            texts.messages.delete_remind_group_success.format(name=group.name, id=group_id))
+        text = texts.messages.delete_remind_group_notification.format(name=group.name, id=group_id)
+        await entities.remind_group.send_message_to_remind_group(session, callback.bot, group_id, text)
+
+        entities.remind_group.delete_remind_group_by_id(session, group_id)
+        await callback.answer()
+    else:
+        await callback.answer(texts.messages.delete_remind_group_fail)
+
