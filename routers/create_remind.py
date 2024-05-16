@@ -8,6 +8,7 @@ from aiogram.types import Message
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import sessionmaker, Session
 
+import entities
 import states
 import remind_parser
 from callbacks import ActionButton, ActionButtonAction
@@ -85,8 +86,8 @@ async def enter_remind_date(message: Message, state: FSMContext):
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.confirm_remind_creation))
 async def confirm_remind_creation(
-        callback: types.CallbackQuery, callback_data: ActionButton,
-        state: FSMContext, context: Context):
+        callback: types.CallbackQuery,
+        state: FSMContext, context: Context, db_session: Session):
     # Получаем контекст
     data = await state.get_data()
 
@@ -96,11 +97,8 @@ async def confirm_remind_creation(
     job = context.scheduler.add_job(send_remind, "date", run_date=real_time,
                             args=(callback.message.chat.id, data["text"]))
 
-    with context.db_session_maker() as session:
-        # todo: добавить группу напоминания
-        new_remind = Remind(user_id=callback.message.chat.id, remind_date=real_time, text=data["text"], scheduler_job_id=job.id)
-        session.add(new_remind)
-        session.commit()
+    # todo: добавить группу напоминания
+    entities.remind.create_remind(db_session, callback.message.chat.id, real_time, data["text"], job.id)
 
     # todo: получение id группы напоминаний, если выбрана
     remind_group_id: Optional[int] = None
@@ -108,7 +106,7 @@ async def confirm_remind_creation(
         time_text = real_time.strftime(TIME_FORMAT)
         text = f'Создано новое групповое напоминание:\n' \
                f'{time_text},{data["text"]}'
-        await send_message_to_remind_group(context.db_session_maker(), callback.bot, remind_group_id, text)
+        await send_message_to_remind_group(db_session, callback.bot, remind_group_id, text)
 
     # Отправить сообщение
     await callback.message.answer("☑️ Напоминание успешно создано")

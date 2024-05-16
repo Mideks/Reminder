@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import entities
 from context import Context
 from entities.base import Base
+from middlewares.session_creator import SessionCreatorMiddleware
 from routers import create_remind, commands, remind_list, manage_groups
 
 # Для верного отображения дат
@@ -44,6 +45,7 @@ async def main() -> None:
     # задаём контекст для бота
     context = Context(db_session, scheduler)
     dp["context"] = context
+    dp.update.middleware.register(SessionCreatorMiddleware())
 
     # подключаем роутеры
     dp.include_router(commands.router)

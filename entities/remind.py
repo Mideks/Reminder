@@ -30,7 +30,13 @@ class Remind(Base):
 
 def create_remind(session: Session, user_id: int, remind_date: datetime, text: str, scheduler_job_id: str,
                   remind_group_id: Optional[int] = None) -> Remind:
-    raise NotImplementedError()
+    new_remind = Remind(
+        user_id=user_id, remind_date=remind_date, text=text,
+        scheduler_job_id=scheduler_job_id, remind_group_id=remind_group_id
+    )
+    session.add(new_remind)
+    session.commit()
+    return new_remind
 
 
 def get_group_reminds(session: Session, remind_group_id: int) -> list[Type[Remind]]:

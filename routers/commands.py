@@ -4,6 +4,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from sqlalchemy.orm import Session
 
 import callbacks
 import texts.messages
@@ -15,10 +16,10 @@ router = Router()
 
 
 @router.message(CommandStart(magic=~F.args))
-async def command_start_handler(message: Message, context: Context, command: CommandObject) -> None:
+async def command_start_handler(message: Message, db_session: Session) -> None:
     await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
     user = message.from_user
-    update_user(context.db_session_maker(), user.id, user.first_name, user.last_name)
+    update_user(db_session, user.id, user.first_name, user.last_name)
 
 
 @router.message(Command("cancel"))
