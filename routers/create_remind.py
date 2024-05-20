@@ -17,14 +17,7 @@ from entities.remind_group import send_message_to_remind_group
 from keyboards import get_confirm_remind_creation_keyboard
 from states.state_data import StateData
 from tasks import send_remind
-
-group_remind_created_notification = ('Создано новое напоминание для группы {name} (#{id}).\n' \
-                       'Напоминание:\n' \
-                       '{time_text}, {text}')
-
-remind_creation_succesful = "☑️ Напоминание успешно создано"
-
-entering_remind_text = "Давай создадим новое напоминание! Для начала введи текст напоминания"
+from texts.messages import remind_creation_successful, entering_remind_text, group_remind_created_notification
 
 TIME_FORMAT = '%d %B в %H:%M:%S'
 
@@ -122,22 +115,29 @@ async def confirm_remind_creation(
     real_time: datetime = data['time'] + (datetime.now() - data['entering_time'])
     # Добавить напоминание в планировщик
     remind_text = data["text"]
-    job = context.scheduler.add_job(
-        send_remind, "date", run_date=real_time, args=(callback.message.chat.id, remind_text))
 
     remind_group_id: Optional[int] = state_data.selected_remind_group_id
     remind_group = entities.remind_group.get_remind_group(db_session, remind_group_id)
+
     if remind_group_id is not None:
         time_text = real_time.strftime(TIME_FORMAT)
         text = group_remind_created_notification.format(
-            time=time_text, text=remind_text, id=remind_group_id, name=remind_group.name)
+            time_text=time_text, text=remind_text, id=remind_group_id,
+            name=remind_group.name, user=callback.from_user.first_name)
         await send_message_to_remind_group(db_session, callback.bot, remind_group_id, text)
 
-    entities.remind.create_remind(
-        db_session, callback.message.chat.id, real_time, remind_text, job.id, remind_group_id)
+    remind = entities.remind.create_remind(
+        db_session, callback.message.chat.id, real_time, remind_text, remind_group_id)
+
+    job = context.scheduler.add_job(
+        send_remind, "date", run_date=real_time, args=(remind.id,))
+
+    remind.scheduler_job_id = job.id
+    db_session.add(remind)
+    db_session.commit()
 
     # Отправить сообщение
-    await callback.message.answer(remind_creation_succesful)
+    await callback.message.answer(remind_creation_successful)
     await callback.answer()
 
 
@@ -168,6 +168,6 @@ async def create_remind_from_text_handler(message: Message, state: FSMContext):
     text = message.text[prefix_len:].lstrip()
     parsed_time = remind_parser.parse_time(text)
     parsed_text = remind_parser.parse_text(text)
-    await state.update_data(time=parsed_time, text=parsed_text )
+    await state.update_data(time=parsed_time, text=parsed_text)
 
     await send_confirm_remind_creation(message, state)

@@ -25,11 +25,11 @@ class Remind(Base):
 
     remind_date: Mapped[datetime] = mapped_column(DateTime)
     text: Mapped[str] = mapped_column(String)
-    scheduler_job_id: Mapped[str] = mapped_column(String)
+    scheduler_job_id: Mapped[Optional[str]] = mapped_column(String)
 
 
-def create_remind(session: Session, user_id: int, remind_date: datetime, text: str, scheduler_job_id: str,
-                  remind_group_id: Optional[int] = None) -> Remind:
+def create_remind(session: Session, user_id: int, remind_date: datetime, text: str,
+                  remind_group_id: Optional[int] = None, scheduler_job_id: Optional[str] = None) -> Remind:
     new_remind = Remind(
         user_id=user_id, remind_date=remind_date, text=text,
         scheduler_job_id=scheduler_job_id, remind_group_id=remind_group_id
