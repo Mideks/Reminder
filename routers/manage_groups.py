@@ -14,7 +14,7 @@ import states
 import texts.messages
 from context import Context
 from entities.user_remind_group import Role
-from states import CreateReminderGroup
+from states.states import CreateReminderGroup
 
 router = Router()
 
@@ -25,7 +25,7 @@ async def start_group_create_command(message: Message, state: FSMContext):
     await state.set_state(CreateReminderGroup.entering_name)
 
 
-@router.message(states.CreateReminderGroup.entering_name)
+@router.message(states.states.CreateReminderGroup.entering_name)
 async def group_create_entering_name_handler(message: Message, context: Context, state: FSMContext, db_session: Session):
     name = message.text
     owner_id = message.from_user.id

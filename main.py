@@ -16,6 +16,7 @@ import entities
 from context import Context
 from entities.base import Base
 from middlewares.session_creator import SessionCreatorMiddleware
+from middlewares.state_data_provider import StateDataProvider
 from routers import create_remind, commands, remind_list, manage_groups
 
 # Для верного отображения дат
@@ -46,6 +47,7 @@ async def main() -> None:
     context = Context(db_session, scheduler)
     dp["context"] = context
     dp.update.middleware.register(SessionCreatorMiddleware())
+    dp.update.middleware.register(StateDataProvider())
 
     # подключаем роутеры
     dp.include_router(commands.router)
