@@ -9,8 +9,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import sessionmaker, Session
 
 import entities
+import keyboards
 import states
 import remind_parser
+import texts
 from callbacks import ActionButton, ActionButtonAction
 from context import Context
 from entities.remind import Remind
@@ -23,7 +25,14 @@ TIME_FORMAT = '%d %B в %H:%M:%S'
 
 router = Router()
 
-# todo: создать обработчик для выбора в какой группе создаётся напоминание
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_group_remind))
+async def new_group_remind_callback(callback: types.CallbackQuery, db_session: Session):
+    groups = entities.user.get_user(db_session, callback.from_user.id).groups
+    keyboard = keyboards.get_new_group_remind_keyboard(groups).as_markup()
+    await callback.message.edit_text(texts.messages.new_group_remind, reply_markup=keyboard)
+    await callback.answer()
+
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_remind))
 async def enter_remind_creation(

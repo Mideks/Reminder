@@ -74,11 +74,17 @@ async def group_list_callback(callback: CallbackQuery, db_session: Session):
     await callback.answer()
 
 
+@router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_remind_groups_list))
+async def group_list_callback(callback: CallbackQuery, db_session: Session):
+    await group_list_command(callback.message, db_session)
+    await callback.answer()
+
+
 @router.message(Command('groups'))
 async def group_list_command(message: Message, db_session: Session):
     user_id = message.chat.id
     groups = entities.user.get_user(db_session, user_id).groups
-    kb = keyboards.get_groups_list_keyboard(groups)
+    kb = keyboards.get_groups_list_keyboard(groups, callbacks.ActionButtonAction.show_group)
     await message.answer(texts.messages.show_groups_list, reply_markup=kb.as_markup())
 
 

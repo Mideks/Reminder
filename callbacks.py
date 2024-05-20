@@ -18,6 +18,9 @@ class ActionButtonAction(enum.Enum):
     change_remind_group_name = "change_remind_group_name"
     leave_from_remind_group = "leave_from_remind_group"
     delete_remind_group = "delete_remind_group"
+    show_remind_groups_list = "show_remind_groups_list"
+    select_group_for_new_remind = "select_group_for_new_remind"
+    show_menu = "show_menu"
 
 
 class ActionButton(CallbackData, prefix="action"):
