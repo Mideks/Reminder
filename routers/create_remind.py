@@ -10,14 +10,13 @@ import entities
 import keyboards
 import remind_parser
 import states
-import texts
 from callbacks import ActionButton, ActionButtonAction
 from context import Context
 from entities.remind_group import send_message_to_remind_group
 from keyboards import get_confirm_remind_creation_keyboard
 from states.state_data import StateData
 from tasks import send_remind
-from texts.messages import remind_creation_successful, entering_remind_text, group_remind_created_notification
+import texts.messages
 
 TIME_FORMAT = '%d %B в %H:%M:%S'
 
@@ -50,7 +49,7 @@ async def select_group_for_new_remind_handler(
 async def enter_remind_creation(
         callback: types.CallbackQuery, callback_data: ActionButton,
         state: FSMContext):
-    await callback.message.reply(entering_remind_text)
+    await callback.message.edit_text(texts.messages.entering_remind_text)
     # Переходим к состоянию "ожидаю ввода текста напоминания"
     await state.set_state(states.states.CreateNewReminder.entering_text)
     await callback.answer()  # чтобы кнопка не зависала
@@ -61,8 +60,7 @@ async def enter_remind_text(message: Message, state: FSMContext):
     text = message.text
     await state.update_data(text=text)  # Здесь мы сохраняем введенный текст
 
-    await message.reply("Окей, теперь давай определимся со временем\n"
-                        "Вы можете ввести время в свободной форме, или в формате DD/MM hh:mm")
+    await message.reply(texts.messages.entering_remind_time)
     # Переходим к состоянию "ожидаю ввода времени напоминания"
     await state.set_state(states.states.CreateNewReminder.entering_time)
 
@@ -71,10 +69,9 @@ async def send_confirm_remind_creation(message: Message, state: FSMContext):
     # получаем ранее записанные данные
     data = await state.get_data()
     time_text = data["time"].strftime(TIME_FORMAT)
+    text = data['text']
     await message.reply(
-        "Почти готов, давай проверим, всё ли правильно?\n\n"
-        f"Напоминание будет <b>{time_text}</b>\n"
-        f"{data['text']}",
+        texts.messages.confirm_remind_creation.format(text=text, time_text=time_text),
         reply_markup=get_confirm_remind_creation_keyboard()
     )
 
@@ -89,14 +86,13 @@ async def enter_remind_date(message: Message, state: FSMContext):
 
     parsed_time = remind_parser.parse_time(time)
     if parsed_time is None:
-        await message.reply("Неверный формат даты! Попробуйте ещё раз")
+        await message.answer(texts.messages.data_parse_error)
         return
 
     now = datetime.now()
     time_text = parsed_time.strftime(TIME_FORMAT)
     if parsed_time < now:
-        await message.reply(f"Вы указали {time_text}\n"
-                            "Нельзя указывать дату из прошлого. Введите другую дату")
+        await message.answer(texts.messages.time_from_past_error.format(time_text=time_text))
         return
 
     await state.update_data(time=parsed_time)  # сохраняем введённую дату
@@ -121,10 +117,10 @@ async def confirm_remind_creation(
 
     if remind_group_id is not None:
         time_text = real_time.strftime(TIME_FORMAT)
-        text = group_remind_created_notification.format(
+        notification_text = texts.messages.group_remind_created_notification.format(
             time_text=time_text, text=remind_text, id=remind_group_id,
             name=remind_group.name, user=callback.from_user.first_name)
-        await send_message_to_remind_group(db_session, callback.bot, remind_group_id, text)
+        await send_message_to_remind_group(db_session, callback.bot, remind_group_id, notification_text)
 
     remind = entities.remind.create_remind(
         db_session, callback.message.chat.id, real_time, remind_text, remind_group_id)
@@ -137,13 +133,13 @@ async def confirm_remind_creation(
     db_session.commit()
 
     # Отправить сообщение
-    await callback.message.answer(remind_creation_successful)
+    await callback.message.edit_text(texts.messages.remind_creation_successful)
     await callback.answer()
 
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_text))
 async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите новый текст напоминания")
+    await callback.message.edit_text(texts.messages.edit_remind_text)
     await state.set_state(states.states.CreateNewReminder.editing_text)
     await callback.answer()
 
@@ -157,7 +153,7 @@ async def edit_remind_text(message: Message, state: FSMContext):
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_time))
 async def edit_remind_text(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите новое время напоминания")
+    await callback.message.edit_text(texts.messages.edit_remind_time)
     await state.set_state(states.states.CreateNewReminder.editing_time)
     await callback.answer()
 
