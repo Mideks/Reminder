@@ -56,7 +56,7 @@ async def delete_remind(
         callback: CallbackQuery, callback_data: RemindButton, context: Context, db_session: Session):
     _ = delete_remind_by_id(db_session, context.scheduler, callback_data.remind_id)
     await callback.answer("Напоминание было удалено")
-    await send_remind_list(callback.message, context)
+    await send_remind_list(callback.message, db_session)
 
 
 # todo: добавить редактирование времени напоминания

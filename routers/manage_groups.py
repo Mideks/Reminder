@@ -47,6 +47,10 @@ async def join_group_command(message: Message, command: CommandObject, db_sessio
     entities.user.update_user(db_session, user.id, user.first_name, user.last_name)
 
     group = entities.remind_group.get_remind_group(db_session, remind_group_id)
+    if group is None:
+        await message.answer(texts.messages.remind_group_does_not_exists_error)
+        return
+
     db_user = entities.user.get_user(db_session, user.id)
     result = entities.remind_group.remind_group_join_user(db_session, user.id, remind_group_id)
     if result:
