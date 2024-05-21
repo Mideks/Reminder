@@ -31,25 +31,46 @@ async def new_group_remind_callback(callback: types.CallbackQuery, db_session: S
     await callback.answer()
 
 
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_group))
+async def edit_remind_group_callback(callback: types.CallbackQuery, db_session: Session):
+    groups = entities.user.get_user(db_session, callback.from_user.id).groups
+    keyboard = keyboards.get_edit_remind_group_keyboard(groups).as_markup()
+    await callback.message.edit_text(texts.messages.new_group_remind, reply_markup=keyboard)
+    await callback.answer()
+
+
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.select_group_for_new_remind))
 async def select_group_for_new_remind_handler(
         callback: types.CallbackQuery, state: FSMContext, callback_data: ActionButton,
         db_session: Session, state_data: StateData):
     group_id = int(callback_data.data)
     group = entities.remind_group.get_remind_group(db_session, group_id)
-    text = texts.messages.select_group_for_new_remind.format(name=group.name, id=group_id)
     state_data.selected_remind_group_id = group_id
 
+    text = texts.messages.select_group_for_new_remind.format(name=group.name, id=group_id)
     await callback.message.edit_text(text)
     await state.set_state(states.states.CreateNewReminder.entering_text)
     await callback.answer()
 
 
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_group_for_new_remind))
+async def select_group_for_new_remind_handler(
+        callback: types.CallbackQuery, state: FSMContext, callback_data: ActionButton, state_data: StateData):
+    group_id = int(callback_data.data)
+    state_data.selected_remind_group_id = group_id
+
+    await send_confirm_remind_creation(callback.message, state)
+    await callback.message.delete()
+    await callback.answer()
+
+
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.new_remind))
 async def enter_remind_creation(
-        callback: types.CallbackQuery, callback_data: ActionButton,
+        callback: types.CallbackQuery,
         state: FSMContext):
-    await callback.message.edit_text(texts.messages.entering_remind_text)
+    await callback.message.edit_text(
+        texts.messages.entering_remind_creation,
+        reply_markup=keyboards.get_entering_remind_creation_keyboard().as_markup())
     # Переходим к состоянию "ожидаю ввода текста напоминания"
     await state.set_state(states.states.CreateNewReminder.entering_text)
     await callback.answer()  # чтобы кнопка не зависала
@@ -70,7 +91,7 @@ async def send_confirm_remind_creation(message: Message, state: FSMContext):
     data = await state.get_data()
     time_text = data["time"].strftime(TIME_FORMAT)
     text = data['text']
-    await message.reply(
+    await message.answer(
         texts.messages.confirm_remind_creation.format(text=text, time_text=time_text),
         reply_markup=get_confirm_remind_creation_keyboard()
     )
@@ -98,6 +119,12 @@ async def enter_remind_date(message: Message, state: FSMContext):
     await state.update_data(time=parsed_time)  # сохраняем введённую дату
     await state.update_data(entering_time=now)
     await send_confirm_remind_creation(message, state)
+
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.show_confirm_remind_creation_menu))
+async def show_confirm_remind_creation_menu_handler(
+        callback: types.CallbackQuery, state: FSMContext):
+    await send_confirm_remind_creation(callback.message, state)
 
 
 @router.callback_query(ActionButton.filter(F.action == ActionButtonAction.confirm_remind_creation))
@@ -133,7 +160,9 @@ async def confirm_remind_creation(
     db_session.commit()
 
     # Отправить сообщение
-    await callback.message.edit_text(texts.messages.remind_creation_successful)
+    await callback.message.edit_text(
+        texts.messages.remind_creation_successful,
+        reply_markup=keyboards.get_remind_creation_successful_keyboard().as_markup())
     await callback.answer()
 
 

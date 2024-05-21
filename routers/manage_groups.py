@@ -85,7 +85,7 @@ async def group_list_command(message: Message, db_session: Session):
     user_id = message.chat.id
     groups = entities.user.get_user(db_session, user_id).groups
     kb = keyboards.get_groups_list_keyboard(groups, callbacks.ActionButtonAction.show_group)
-    await message.answer(texts.messages.show_groups_list, reply_markup=kb.as_markup())
+    await message.edit_text(texts.messages.show_groups_list, reply_markup=kb.as_markup())
 
 
 @router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_group))
@@ -98,8 +98,8 @@ async def show_group_callback(
     text = texts.messages.group_management.format(name=group.name, id=group_id, link=group_link)
     role = entities.remind_group.get_user_role(db_session, group_id, callback.message.chat.id)
     is_owner = role == Role.owner
-    await callback.message.answer(text,
-                                  reply_markup=keyboards.get_grop_management_keyboard(group, is_owner).as_markup())
+    keyboard = keyboards.get_grop_management_keyboard(group, is_owner).as_markup()
+    await callback.message.edit_text(text, reply_markup=keyboard)
     await callback.answer()
 
 

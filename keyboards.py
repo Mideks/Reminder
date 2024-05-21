@@ -6,16 +6,25 @@ from callbacks import ActionButton, RemindButton, RemindButtonAction, NavigateBu
     ActionButtonAction
 from entities.remind import Remind
 from entities.remind_group import RemindGroup
-from texts.buttons import back_to_menu
+from texts.buttons import back_to_menu, remind_creation_confirm, remind_creation_change_text, \
+    remind_creation_change_time
 
 
 def get_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    builder.button(text=texts.buttons.new_remind, callback_data=ActionButton(action=ActionButtonAction.new_remind))
-    builder.button(text=texts.buttons.new_group_remind,
-                   callback_data=ActionButton(action=ActionButtonAction.new_group_remind))
-    builder.button(text=texts.buttons.my_remind_list, callback_data=ActionButton(action=ActionButtonAction.remind_list))
+    builder.button(
+        text=texts.buttons.new_remind,
+        callback_data=ActionButton(action=ActionButtonAction.new_remind)
+    )
+    builder.button(
+        text=texts.buttons.new_group_remind,
+        callback_data=ActionButton(action=ActionButtonAction.new_group_remind)
+    )
+    builder.button(
+        text=texts.buttons.my_remind_list,
+        callback_data=ActionButton(action=ActionButtonAction.remind_list)
+    )
     builder.button(
         text=texts.buttons.my_remind_groups_list,
         callback_data=ActionButton(action=ActionButtonAction.show_remind_groups_list)
@@ -28,11 +37,13 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
 def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
-    builder.button(text="📝 Изменить текст",
+    builder.button(text=remind_creation_change_text,
                    callback_data=ActionButton(action=ActionButtonAction.edit_remind_text))
-    builder.button(text="⏳ Изменить время",
+    builder.button(text=remind_creation_change_time,
                    callback_data=ActionButton(action=ActionButtonAction.edit_remind_time))
-    builder.button(text="✅ Всё верно",
+    builder.button(text=texts.buttons.remind_creation_change_remind_group,
+                   callback_data=ActionButton(action=ActionButtonAction.edit_remind_group))
+    builder.button(text=remind_creation_confirm,
                    callback_data=ActionButton(action=ActionButtonAction.confirm_remind_creation))
 
     builder.adjust(2, 1)
@@ -70,6 +81,13 @@ def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
 
 def get_groups_list_keyboard(groups: list[RemindGroup], action: ActionButtonAction) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
+    kb.attach(get_groups_list_raw_keyboard(action, groups))
+    kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
+    return kb
+
+
+def get_groups_list_raw_keyboard(action: ActionButtonAction, groups: list[RemindGroup]):
+    kb = InlineKeyboardBuilder()
     for group in groups:
         text = f"{group.name} (#{group.id})"
         kb.button(text=text,
@@ -101,7 +119,33 @@ def get_grop_management_keyboard(group: RemindGroup, is_owner: bool = False) -> 
 
 def get_new_group_remind_keyboard(groups: list[RemindGroup]) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
-    kb.attach(get_groups_list_keyboard(groups, ActionButtonAction.select_group_for_new_remind))
+    kb.attach(get_groups_list_raw_keyboard(ActionButtonAction.select_group_for_new_remind, groups))
     kb.button(text=texts.buttons.back, callback_data=ActionButton(action=ActionButtonAction.show_menu))
     kb.adjust(1)
+    return kb
+
+
+def get_edit_remind_group_keyboard(groups: list[RemindGroup]) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.attach(get_groups_list_raw_keyboard(ActionButtonAction.edit_group_for_new_remind, groups))
+    kb.button(text=texts.buttons.back,
+              callback_data=ActionButton(action=ActionButtonAction.show_confirm_remind_creation_menu))
+    kb.adjust(1)
+    return kb
+
+
+def get_remind_creation_successful_keyboard() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text=texts.buttons.create_another_remind,
+        callback_data=ActionButton(action=ActionButtonAction.new_remind)
+    )
+    kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
+    kb.adjust(1)
+    return kb
+
+
+def get_entering_remind_creation_keyboard() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
     return kb

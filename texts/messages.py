@@ -70,7 +70,7 @@ group_remind_created_notification = (
 
 # remind creation
 remind_creation_successful = "☑️ Напоминание успешно создано"
-entering_remind_text = "Давай создадим новое напоминание! Для начала введи текст напоминания"
+entering_remind_creation = "Давай создадим новое напоминание! Для начала введи текст напоминания"
 new_group_remind = (
     "Выберите группу, для которой хотите создать напоминание. "
     "Это напоминание получат все участники группы."
