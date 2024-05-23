@@ -4,6 +4,7 @@ change_remind_group_name = "✍️ Изменить название"
 remind_group_member_management = "🔒 Управление участниками"
 delete_remind_group = "❌ Удалить группу"
 back_to_group_list = "🔙 Назад к списку"
+create_remind_group = "🆕 Создать группу"
 
 # show_menu
 new_remind = "🔔 Новое напоминание"

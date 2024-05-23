@@ -81,8 +81,10 @@ def get_remind_menu_markup(remind: Remind) -> InlineKeyboardBuilder:
 
 def get_groups_list_keyboard(groups: list[RemindGroup], action: ActionButtonAction) -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
+    kb.button(text=texts.buttons.create_remind_group, callback_data=ActionButton(action=ActionButtonAction.create_remind_group))
     kb.attach(get_groups_list_raw_keyboard(action, groups))
     kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
+    kb.adjust(1)
     return kb
 
 
@@ -149,3 +151,10 @@ def get_entering_remind_creation_keyboard() -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
     return kb
+
+
+def get_create_remind_group_markup() -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_remind_groups_list))
+    return kb
+

@@ -21,8 +21,18 @@ router = Router()
 
 @router.message(Command('group_create'))
 async def start_group_create_command(message: Message, state: FSMContext):
-    await message.answer(texts.messages.create_group_enter_name)
+    kb = keyboards.get_create_remind_group_markup().as_markup()
+    await message.answer(texts.messages.create_group_enter_name, reply_markup=kb)
     await state.set_state(CreateReminderGroup.entering_name)
+
+
+@router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.create_remind_group))
+async def create_remind_group_callback(callback: CallbackQuery, db_session: Session, state: FSMContext):
+    kb = keyboards.get_create_remind_group_markup().as_markup()
+    await callback.message.edit_text(texts.messages.create_group_enter_name, reply_markup=kb)
+    await state.set_state(CreateReminderGroup.entering_name)
+    await callback.answer()
+
 
 
 @router.message(states.states.CreateReminderGroup.entering_name)
