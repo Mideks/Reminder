@@ -34,7 +34,6 @@ async def create_remind_group_callback(callback: CallbackQuery, db_session: Sess
     await callback.answer()
 
 
-
 @router.message(states.states.CreateReminderGroup.entering_name)
 async def group_create_entering_name_handler(message: Message, context: Context, state: FSMContext, db_session: Session):
     name = message.text
@@ -43,7 +42,7 @@ async def group_create_entering_name_handler(message: Message, context: Context,
     join_link = await entities.remind_group.get_remind_group_join_link(message.bot, group.id)
 
     text = texts.messages.create_group_success.format(link=join_link)
-    await message.answer(text)
+    await message.answer(text, reply_markup=keyboards.get_success_group_creating_keyboard())
     await state.clear()
 
 

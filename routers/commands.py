@@ -5,6 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from sqlalchemy.orm import Session
 
 import callbacks
+import keyboards
 import texts.messages
 from entities.user import update_user
 from keyboards import get_menu_keyboard
@@ -28,4 +29,11 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 @router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_menu))
 async def send_start_menu(callback: CallbackQuery):
     await callback.message.edit_text(texts.messages.greeting_message, reply_markup=get_menu_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_help_section))
+async def send_start_menu(callback: CallbackQuery):
+    await callback.message.edit_text(texts.messages.help_section,
+                                     reply_markup=keyboards.get_help_section_keyboard().as_markup())
     await callback.answer()
