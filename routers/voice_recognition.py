@@ -109,6 +109,7 @@ async def edit_raw_remind_handler(callback: types.CallbackQuery, state: FSMConte
     raw_remind = state_data.raw_reminds[index]
     state_data.selected_raw_remind = index
     await state.update_data(time=raw_remind[0], text=raw_remind[1])
+    state_data.selected_remind_group_id = raw_remind[2]
 
     await callback.message.edit_text(
         await get_confirm_creation_text(state),
