@@ -30,6 +30,8 @@ class ActionButtonAction(enum.Enum):
     edit_raw_remind = "edit_raw_remind"
     back_to_raw_remind_list = "back_to_raw_remind_list"
     create_remind_from_voice = "create_remind_from_voice"
+    edit_remind_group_for_all_raw = "edit_remind_group_for_all_raw"
+    edit_group_for_all_raw_reminds = "edit_group_for_all_raw_reminds"
 
 
 class ActionButton(CallbackData, prefix="action"):

@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.orm import Session
 
+import entities
 import keyboards
 import remind_parser
 import texts
@@ -132,3 +133,22 @@ async def approve_all_reminds_handler(
             texts.buttons.back_to_menu, ActionButtonAction.show_menu
         ).as_markup()
     )
+
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_remind_group_for_all_raw))
+async def edit_remind_group_for_all_raw_callback(callback: types.CallbackQuery, db_session: Session):
+    groups = entities.user.get_user(db_session, callback.from_user.id).groups
+    keyboard = keyboards.get_edit_remind_group_for_all_raw_keyboard(groups).as_markup()
+    await callback.message.edit_text(texts.messages.new_group_remind, reply_markup=keyboard)
+    await callback.answer()
+
+
+@router.callback_query(ActionButton.filter(F.action == ActionButtonAction.edit_group_for_all_raw_reminds))
+async def edit_group_for_all_raw_reminds_callback(
+        callback: types.CallbackQuery, state: FSMContext, state_data: StateData, callback_data: ActionButton):
+    group_id = int(callback_data.data)
+    for raw in state_data.raw_reminds:
+        raw[2] = group_id
+
+    await send_raw_remind_list(callback.message, state, state_data)
+    await callback.answer(texts.messages.group_changed_successful_for_all_raws)

@@ -36,7 +36,7 @@ async def create_remind_from_data(
         time_text = real_time.strftime(TIME_FORMAT)
         notification_text = texts.messages.group_remind_created_notification.format(
             time_text=time_text, text=remind_text, id=remind_group_id,
-            name=remind_group.name, user=message.from_user.first_name)
+            name=remind_group.name, user=message.chat.first_name)
         await send_message_to_remind_group(db_session, message.bot, remind_group_id, notification_text)
 
     remind = entities.remind.create_remind(

@@ -54,7 +54,7 @@ async def main() -> None:
     dp.include_router(manage_groups.router)
     dp.include_router(create_remind.router)
     dp.include_router(remind_list.router)
-    dp.include_router(testing.router)
+    dp.include_router(voice_recognition.router)
 
 
     # Запускаем бота

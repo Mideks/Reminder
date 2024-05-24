@@ -151,6 +151,14 @@ def get_edit_remind_group_keyboard(groups: list[RemindGroup]) -> InlineKeyboardB
     return kb
 
 
+def get_edit_remind_group_for_all_raw_keyboard(groups: list[RemindGroup]) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.attach(get_groups_list_raw_keyboard(ActionButtonAction.edit_group_for_all_raw_reminds, groups))
+    kb.button(text=texts.buttons.back,
+              callback_data=ActionButton(action=ActionButtonAction.back_to_raw_remind_list))
+    kb.adjust(1)
+    return kb
+
 def get_remind_creation_successful_keyboard() -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.button(
@@ -196,6 +204,8 @@ def get_parsed_reminds_keyboard(raw_reminds: list[list[str]]) -> InlineKeyboardB
         kb.button(text=button_text,
                   callback_data=ActionButton(action=ActionButtonAction.edit_raw_remind, data=f"{i}"))
 
+    kb.button(text=texts.buttons.remind_creation_change_remind_group,
+                   callback_data=ActionButton(action=ActionButtonAction.edit_remind_group_for_all_raw))
     kb.button(text=texts.buttons.approve_all_reminds,
               callback_data=ActionButton(action=ActionButtonAction.approve_all_reminds))
     kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
