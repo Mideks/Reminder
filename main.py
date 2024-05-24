@@ -17,7 +17,7 @@ from context import Context
 from entities.base import Base
 from middlewares.session_creator import SessionCreatorMiddleware
 from middlewares.state_data_provider import StateDataProvider
-from routers import create_remind, commands, remind_list, manage_groups, testing
+from routers import create_remind, commands, remind_list, manage_groups, voice_recognition
 
 # Для верного отображения дат
 locale.setlocale(locale.LC_TIME, 'ru_RU')

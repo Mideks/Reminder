@@ -8,6 +8,7 @@ from entities.remind import Remind
 from entities.remind_group import RemindGroup
 from texts.buttons import back_to_menu, remind_creation_confirm, remind_creation_change_text, \
     remind_creation_change_time
+from texts.messages import TIME_FORMAT
 
 
 def get_menu_keyboard() -> InlineKeyboardMarkup:
@@ -20,6 +21,10 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
     builder.button(
         text=texts.buttons.new_group_remind,
         callback_data=ActionButton(action=ActionButtonAction.new_group_remind)
+    )
+    builder.button(
+        text=texts.buttons.remind_from_voice,
+        callback_data=ActionButton(action=ActionButtonAction.create_remind_from_voice)
     )
     builder.button(
         text=texts.buttons.my_remind_list,
@@ -38,7 +43,7 @@ def get_menu_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
+def get_confirm_remind_creation_keyboard(raw: bool = False) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
 
     builder.button(text=remind_creation_change_text,
@@ -47,12 +52,18 @@ def get_confirm_remind_creation_keyboard() -> InlineKeyboardMarkup:
                    callback_data=ActionButton(action=ActionButtonAction.edit_remind_time))
     builder.button(text=texts.buttons.remind_creation_change_remind_group,
                    callback_data=ActionButton(action=ActionButtonAction.edit_remind_group))
-    builder.button(text=remind_creation_confirm,
-                   callback_data=ActionButton(action=ActionButtonAction.confirm_remind_creation))
+    if raw:
+        builder.button(
+            text=texts.buttons.back_to_raw_remind_list,
+            callback_data=ActionButton(action=ActionButtonAction.back_to_raw_remind_list))
+    else:
+        builder.button(
+            text=remind_creation_confirm,
+            callback_data=ActionButton(action=ActionButtonAction.confirm_remind_creation))
 
     builder.adjust(2, 1)
 
-    return builder.as_markup()
+    return builder
 
 
 def get_remind_list_keyboard(reminds: list[Remind]) -> InlineKeyboardBuilder:
@@ -173,3 +184,30 @@ def get_success_group_creating_keyboard() -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.button(text=texts.buttons.back_to_group_list, callback_data=ActionButton(action=ActionButtonAction.show_remind_groups_list))
     return kb
+
+
+def get_parsed_reminds_keyboard(raw_reminds: list[list[str]]) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+
+    for i, raw_remind in enumerate(raw_reminds):
+        time = raw_remind[0].strftime(TIME_FORMAT)
+        text = raw_remind[1]
+        button_text = texts.buttons.raw_remind_button.format(time=time, text=text)
+        kb.button(text=button_text,
+                  callback_data=ActionButton(action=ActionButtonAction.edit_raw_remind, data=f"{i}"))
+
+    kb.button(text=texts.buttons.approve_all_reminds,
+              callback_data=ActionButton(action=ActionButtonAction.approve_all_reminds))
+    kb.button(text=back_to_menu, callback_data=ActionButton(action=ActionButtonAction.show_menu))
+    kb.adjust(1)
+    return kb
+
+
+def get_navigation_keyboard(text: str, action: ActionButtonAction) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.button(text=text, callback_data=ActionButton(action=action))
+    return kb
+
+
+def get_create_remind_from_voice_keyboard() -> InlineKeyboardBuilder:
+    return get_navigation_keyboard(texts.buttons.back_to_menu, ActionButtonAction.show_menu)

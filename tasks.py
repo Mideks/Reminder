@@ -1,9 +1,9 @@
 import entities.remind
-from main import bot, db_session
 from texts.messages import remind_notification, group_remind_notification
 
 
 async def send_remind(remind_id: int) -> None:
+    from main import bot, db_session
     session = db_session()
     remind = entities.remind.get_remind_by_id(session, remind_id)
 

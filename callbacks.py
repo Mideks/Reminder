@@ -26,6 +26,11 @@ class ActionButtonAction(enum.Enum):
     show_confirm_remind_creation_menu = "show_confirm_remind_creation_menu"
     create_remind_group = "create_remind_group"
     show_help_section = "show_help_section"
+    approve_all_reminds = "approve_all_reminds"
+    edit_raw_remind = "edit_raw_remind"
+    back_to_raw_remind_list = "back_to_raw_remind_list"
+    create_remind_from_voice = "create_remind_from_voice"
+
 
 class ActionButton(CallbackData, prefix="action"):
     action: ActionButtonAction

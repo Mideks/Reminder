@@ -63,7 +63,12 @@ async def join_group_command(message: Message, command: CommandObject, db_sessio
     db_user = entities.user.get_user(db_session, user.id)
     result = entities.remind_group.remind_group_join_user(db_session, user.id, remind_group_id)
     if result:
-        await message.answer(texts.messages.user_joined_to_group.format(name=group.name, id=remind_group_id))
+        await message.answer(
+            texts.messages.user_joined_to_group.format(name=group.name, id=remind_group_id),
+            reply_markup=keyboards.get_navigation_keyboard(
+                texts.buttons.to_menu, callbacks.ActionButtonAction.show_menu
+            ).as_markup()
+        )
         text = texts.messages.user_join_to_remind_group_notification.format(
             user_name=db_user.first_name, group_name=group.name, group_id=remind_group_id)
         await entities.remind_group.send_message_to_remind_group(db_session, message.bot, remind_group_id, text,
