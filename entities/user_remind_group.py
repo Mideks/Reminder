@@ -26,4 +26,5 @@ class UserRemindGroup(Base):
     remind_group_id: Mapped[int] = mapped_column(Integer, ForeignKey('remind_groups.id'), primary_key=True)
     remind_group: Mapped['RemindGroup'] = relationship("RemindGroup")
 
+
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.member)

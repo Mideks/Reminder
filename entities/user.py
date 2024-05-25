@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from entities.remind import Remind
 
 
+
 class User(Base):
     __tablename__ = 'users'
 
