@@ -1,3 +1,4 @@
 /testing/
 db.sqlite
-.env
+/.env
+temp/*.tmp

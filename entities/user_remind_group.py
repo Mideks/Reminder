@@ -21,9 +21,10 @@ class UserRemindGroup(Base):
     __tablename__ = 'user_remind_group'
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True)
-    user: Mapped['User'] = relationship("User", back_populates="user_remind_group")
+    user: Mapped['User'] = relationship("User")
 
     remind_group_id: Mapped[int] = mapped_column(Integer, ForeignKey('remind_groups.id'), primary_key=True)
-    remind_group: Mapped['RemindGroup'] = relationship("RemindGroup", back_populates="user_remind_group")
+    remind_group: Mapped['RemindGroup'] = relationship("RemindGroup")
+
 
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.member)

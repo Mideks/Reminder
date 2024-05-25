@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from aiogram import Bot
 from aiogram.utils.deep_linking import create_start_link
-
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship, Mapped, mapped_column, Session
 
@@ -28,123 +27,172 @@ class RemindGroup(Base):
     name: Mapped[str] = mapped_column(String)
 
     # Relationship to User through the association table
-    users: Mapped[List[User]] = relationship("User", secondary="user_remind_group", back_populates="remind_groups")
+    users: Mapped[List['User']] = relationship("User", secondary="user_remind_group", back_populates="groups")
 
     # Relationship to Remind
     reminds: Mapped[List[Remind]] = relationship("Remind", back_populates="remind_group")
 
 
+def get_remind_group(session: Session, group_id: int) -> Optional[RemindGroup]:
+    return session.query(RemindGroup).get(group_id)
+
+
+def get_user_role(session: Session, remind_group_id: int, user_id: int) -> Role:
+    """
+    Retrieves the role of a user within a specific reminder group.
+
+    This function queries the database for a UserRemindGroup entry that matches the given user_id and remind_group_id.
+    If such an entry exists, it returns the role associated with that entry. Otherwise, it raises a ValueError.
+
+    :param session: The database session used for querying.
+    :param remind_group_id: The identifier of the reminder group.
+    :param user_id: The identifier of the user.
+    :return: The role of the user within the reminder group (e.g., member, admin).
+    :raises ValueError: If no UserRemindGroup entry matches the provided identifiers.
+    """
+    user_remind_group: Optional[UserRemindGroup] = (
+        session.query(UserRemindGroup).filter(
+            UserRemindGroup.user_id == user_id,
+            UserRemindGroup.remind_group_id == remind_group_id
+        ).one_or_none()
+    )
+
+    if user_remind_group:
+        return user_remind_group.role
+    else:
+        # Raise an error if no matching entry was found, indicating the user does not exist in the group
+        raise ValueError("User does not exist in this group")
+
+
 def create_remind_group(session: Session, name: str, owner_id: int) -> RemindGroup:
     """
-    Creates a new remind group with the given name and owner.
+    Creates a new reminder group with the given name and owner.
 
     Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - name (str): The name of the new remind group.
-    - owner_id (int): The ID of the user who owns the group.
+    :param session: The SQLAlchemy session to use for database operations.
+    :param name: The name of the new reminder group.
+    :param owner_id: The ID of the user who owns the group.
 
-    Returns:
-    - RemindGroup: The newly created remind group.
+    :return: The newly created remind group.
     """
     new_group = RemindGroup(name=name)
     session.add(new_group)
     session.commit()
+    remind_group_join_user(session, owner_id, new_group.id, Role.owner)
     return new_group
 
 
-def delete_remind_group_by_id(session: Session, remind_group_id: int) -> None:
+def delete_remind_group_by_id(session: Session, remind_group_id: int) -> bool:
     """
-    Deletes a remind group by its ID.
+    Deletes a reminder group by its ID.
 
-    Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - remind_group_id (int): The ID of the remind group to delete.
+    :param session: The SQLAlchemy session to use for database operations.
+    :param remind_group_id: The ID of the reminder group to delete.
+    :return: if deletion was successful return True
     """
-    group = session.query(RemindGroup).get(remind_group_id)
-    if group:
-        session.delete(group)
-        session.commit()
+    group = get_remind_group(session, remind_group_id)
+    if not group:
+        return False
+
+    session.query(Remind).filter(Remind.remind_group_id == remind_group_id).delete(synchronize_session=False)
+
+    session.delete(group)
+    session.commit()
+    return True
 
 
 def change_remind_group_name(session: Session, remind_group_id: int, new_name: str) -> None:
     """
-    Changes the name of a remind group by its ID.
+    Changes the name of a reminder group by its ID.
 
-    Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - remind_group_id (int): The ID of the remind group to rename.
-    - new_name (str): The new name for the remind group.
+    :param session: The SQLAlchemy session to use for database operations.
+    :param remind_group_id: The ID of the reminder group to rename.
+    :param new_name: The new name for the reminder group.
     """
-    group = session.query(RemindGroup).get(remind_group_id)
+    group = get_remind_group(session, remind_group_id)
     if group:
         group.name = new_name
         session.commit()
 
 
-
-def send_message_to_remind_group(session: Session, bot: Bot, remind_group_id: int) -> None:
+async def send_message_to_remind_group(
+        session: Session, bot: Bot, remind_group_id: int, text: str, ignore_users: Optional[set[int]] = None) -> None:
     """
-    Sends a message to all users in a remind group.
+    Sends a message to all users in a reminder group.
 
-    Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - bot (Bot): The aiogram Bot instance to send messages through.
-    - remind_group_id (int): The ID of the remind group to send messages to.
+    :param ignore_users: A set of user_id's that will be ignoring
+    :param session: The SQLAlchemy session to use for database operations.
+    :param bot: The aiogram Bot instance to send messages through.
+    :param remind_group_id: The ID of the reminder group to send messages to.
+    :param text: message text that will be sand to all group members
     """
-    group = session.query(RemindGroup).get(remind_group_id)
+    group = get_remind_group(session, remind_group_id)
     if group:
         for user in group.users:
-            bot.send_message(user.id, f"Message to {user.name} in group {group.name}")
+            if ignore_users and user.id in ignore_users:
+                continue
+            await bot.send_message(user.id, text)
 
 
-async def get_remind_group_join_link(bot: Bot, remind_group_id: str) -> str:
+async def get_remind_group_join_link(bot: Bot, remind_group_id: int) -> str:
     """
     Creates a deep link for a bot that reminds users to join a group.
 
-    Parameters:
-    - bot (Bot): The aiogram Bot instance.
-    - remind_group_id (str): The ID of the group to join.
+    :param bot: The aiogram Bot instance.
+    :param remind_group_id: The ID of the group to join.
 
-    Returns:
-    - str: A deep link that can be used to start the bot with the specified payload.
+    :return: A deep link that can be used to start the bot with the specified payload.
     """
     # The payload includes the action ("join_group") and the group ID.
-    payload = f"join_group:{remind_group_id}"
+    payload = f"join_{remind_group_id}"
     return await create_start_link(bot, payload)
 
 
-def remind_group_join_user(session: Session, user_id: int, remind_group_id: int, role: Role = Role.member) -> None:
+def remind_group_join_user(session: Session, user_id: int, remind_group_id: int, role: Role = Role.member) -> bool:
     """
-    Adds a user to a remind group with a specified role.
+    Adds a user to a reminder group with a specified role.
 
     Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - user_id (int): The ID of the user to add to the group.
-    - remind_group_id (int): The ID of the remind group to add the user to.
-    - role (Role, optional): The role of the user in the group. Defaults to Role.member.
+    :param session: The SQLAlchemy session to use for database operations.
+    :param user_id: The ID of the user to add to the group.
+    :param remind_group_id: The ID of the reminder group to add the user to.
+    :param role: The role of the user in the group. Defaults to Role.member.
+
+    :return: If True - user successful added to group. False is already in group.
     """
-    user = session.query(User).get(user_id)
-    if user:
-        # Check if the user is not already in the specified remind group
-        if not any(group.id == remind_group_id for group in user.remind_groups):
-            new_join = UserRemindGroup(user_id=user.id, remind_group_id=remind_group_id, role=role.name)
-            session.add(new_join)
-            session.commit()
+    user: User = session.query(User).get(user_id)
+    # Check if the user is not already in the specified remind group
+    if not user:
+        raise ValueError("User does not exists id database")
+    if any(group.id == remind_group_id for group in user.groups):
+        return False
+    new_join = UserRemindGroup(user_id=user.id, remind_group_id=remind_group_id, role=role.name)
+    session.add(new_join)
+    session.commit()
+    return True
 
 
-def remind_group_kick_user(session: Session, user_id: int, remind_group_id: int) -> None:
+def remind_group_kick_user(session: Session, remind_group_id: int, user_id: int) -> bool:
     """
-    Removes a user from a remind group.
+    Removes a user from a reminder group.
 
-    Parameters:
-    - session (Session): The SQLAlchemy session to use for database operations.
-    - user_id (int): The ID of the user to remove from the group.
-    - remind_group_id (int): The ID of the remind group to remove the user from.
+    :param session: The SQLAlchemy session to use for database operations.
+    :param user_id: The ID of the user to remove from the group.
+    :param remind_group_id: The ID of the reminder group to remove the user from.
+
+    :return: If user was in group return True, else return False
     """
-    user = session.query(User).get(user_id)
-    if user:
-        # Check if the user is in the specified remind group
-        if any(group.id == remind_group_id for group in user.remind_groups):
-            session.query(UserRemindGroup).filter(UserRemindGroup.user_id == user.id,
-                                                  UserRemindGroup.remind_group_id == remind_group_id).delete()
-            session.commit()
+    user: User = session.query(User).get(user_id)
+    # Check if the user is in the specified remind group
+    if not user:
+        raise ValueError("User does not exists id database")
+
+    if not any(group.id == remind_group_id for group in user.groups):
+        return False
+
+    session.query(UserRemindGroup).filter(
+        UserRemindGroup.user_id == user.id,
+        UserRemindGroup.remind_group_id == remind_group_id).delete()
+
+    session.commit()
+    return True

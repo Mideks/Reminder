@@ -15,7 +15,9 @@ from sqlalchemy.orm import sessionmaker, Session
 import entities
 from context import Context
 from entities.base import Base
-from routers import create_remind, commands, remind_list
+from middlewares.session_creator import SessionCreatorMiddleware
+from middlewares.state_data_provider import StateDataProvider
+from routers import create_remind, commands, remind_list, manage_groups, voice_recognition
 
 # Для верного отображения дат
 locale.setlocale(locale.LC_TIME, 'ru_RU')
@@ -44,11 +46,15 @@ async def main() -> None:
     # задаём контекст для бота
     context = Context(db_session, scheduler)
     dp["context"] = context
+    dp.update.middleware.register(SessionCreatorMiddleware())
+    dp.update.middleware.register(StateDataProvider())
 
     # подключаем роутеры
     dp.include_router(commands.router)
+    dp.include_router(manage_groups.router)
     dp.include_router(create_remind.router)
     dp.include_router(remind_list.router)
+    dp.include_router(voice_recognition.router)
 
 
     # Запускаем бота

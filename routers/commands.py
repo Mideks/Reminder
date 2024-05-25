@@ -1,43 +1,39 @@
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from sqlalchemy.orm import Session
 
 import callbacks
+import keyboards
+import texts.messages
+from entities.user import update_user
 from keyboards import get_menu_keyboard
 
 router = Router()
 
 
-@router.message(Command('test'))
-async def test_command(message: Message):
-    pass
-
-@router.message(Command('play'))
-async def play_command(message: Message):
-    await message.answer("Авсеп тебе говорит привет!")
+@router.message(CommandStart(magic=~F.args))
+async def command_start_handler(message: Message, db_session: Session) -> None:
+    await message.answer(texts.messages.greeting_message, reply_markup=get_menu_keyboard())
+    user = message.from_user
+    update_user(db_session, user.id, user.first_name, user.last_name)
 
 
-@router.message(Command('lesson'))
-async def lesson_command(message: Message):
-    await message.answer("Тестовая команда с урока")
+@router.message(Command("cancel"))
+async def command_start_handler(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer(texts.messages.cancel_command)
 
 
-@router.message(Command('tust'))
-async def tust_command(message: Message):
-    await message.answer("ДанЛЬМЭН гений")
-
-
-@router.message(Command('sad'))
-async def sad_command(message: Message):
-    await message.answer("ничего яне хочу")
-
-
-@router.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-    await message.answer("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
-
-
-@router.callback_query(callbacks.NavigateButton.filter(F.location == callbacks.NavigateButtonLocation.main_menu))
+@router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_menu))
 async def send_start_menu(callback: CallbackQuery):
-    await callback.message.edit_text("Привет! Я бот напоминалка", reply_markup=get_menu_keyboard())
+    await callback.message.edit_text(texts.messages.greeting_message, reply_markup=get_menu_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(callbacks.ActionButton.filter(F.action == callbacks.ActionButtonAction.show_help_section))
+async def send_start_menu(callback: CallbackQuery):
+    await callback.message.edit_text(texts.messages.help_section,
+                                     reply_markup=keyboards.get_help_section_keyboard().as_markup())
     await callback.answer()
