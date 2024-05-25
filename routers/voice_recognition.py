@@ -69,6 +69,8 @@ async def voice_message_handler(message: types.Message, state: FSMContext, state
 
     raw_reminds = []
     for line in summary.split("\n"):
+        if not line.startswith("напомни"):
+            continue
         line = line.replace("напомни", "").strip()
         parsed_time = remind_parser.texts.parse_time(line)
         parsed_text = remind_parser.texts.parse_text(line)
